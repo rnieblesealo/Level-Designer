@@ -2,11 +2,11 @@ import pygame
 import numpy
 import sys
 import data
+import tile
 import ui
 
 from pygame import Surface
 from pygame.math import Vector2
-from tile import *
 
 #TODO Erasing
 #TODO Undoing
@@ -23,6 +23,13 @@ DISPLAY = pygame.display.set_mode(DISPLAY_SIZE)
 VIEWPORT = Surface(VIEWPORT_SIZE)
 CLOCK = pygame.time.Clock()
 
+BACKGROUND_COLOR = (40, 40, 40)
+FOREGROUND_COLOR = (83, 83, 83)
+VIEWPORT_COLOR = (255, 255, 255)
+
+pencil_icon = pygame.image.load('pencil.png').convert_alpha()
+eraser_icon = pygame.image.load('eraser.png').convert_alpha()
+
 last_offset = Vector2(0, 0)
 initial_mouse_pos = Vector2(0, 0)
 is_panning = False
@@ -36,10 +43,33 @@ def in_bounds(pos: tuple):
         return True
     return False
 
-data.tiles = numpy.empty((data.CANVAS_SIZE[1], data.CANVAS_SIZE[0]), dtype=Tile)
+# TOOLS -- TEMPORARY PLACEMENT HERE! ================================================
+
+def pencil(operand):
+    #replace tile w/selected one
+    operand = tile.Tile(tile.SAMPLE, operand.position)
+
+def eraser(operand):
+    #replace operand tile w/blank tile
+    operand = tile.Tile(tile.DEFAULT, operand.position)
+
+def set_tool(new_tool):
+    global current_tool
+    current_tool = new_tool
+
+current_tool = pencil
+
+# ===================================================================================
+
+#fill canvas with empty tiles
+data.tiles = numpy.empty((data.CANVAS_SIZE[1], data.CANVAS_SIZE[0]), dtype=tile.Tile)
 for x in range(data.CANVAS_SIZE[0]):
     for y in range(data.CANVAS_SIZE[1]):
-        Tile(Vector2(x * data.TILE_SIZE, y * data.TILE_SIZE)) #placeholder, this should be modifiable
+        tile.Tile(tile.DEFAULT, Vector2(x * data.TILE_SIZE, y * data.TILE_SIZE)) #make placeholder tile, should be customizable
+
+#button
+pencil_button = ui.Button(Vector2(40, 30), (45, 45), FOREGROUND_COLOR, pencil_icon, set_tool, pencil)
+eraser_button = ui.Button(Vector2(40 + 30 + 45, 30), (45, 45), FOREGROUND_COLOR, eraser_icon, set_tool, eraser)
 
 while True:
     for event in pygame.event.get():
@@ -52,10 +82,15 @@ while True:
     if pygame.key.get_pressed()[pygame.K_ESCAPE]:
         sys.exit()
 
-    DISPLAY.fill((25, 25, 25))
-    DISPLAY.blit(VIEWPORT, ((DISPLAY_SIZE[0] - VIEWPORT_SIZE[0]) / 2, 0))
-    VIEWPORT.fill((0, 0, 0))
+    #testing
+    if pygame.key.get_pressed()[pygame.K_e]:
+        current_tool = eraser
 
+    DISPLAY.fill(FOREGROUND_COLOR)
+    DISPLAY.blit(VIEWPORT, ((DISPLAY_SIZE[0] - VIEWPORT_SIZE[0]) / 2, 0))
+    VIEWPORT.fill(BACKGROUND_COLOR)
+
+    #mouse position accounting for offset & zoom
     real_position = (Vector2(pygame.mouse.get_pos()) / data.zoom) - data.offset - Vector2((DISPLAY_SIZE[0] - VIEWPORT_SIZE[0]), 0)
 
     #panning
@@ -71,17 +106,17 @@ while True:
             last_offset = data.offset.copy()
             is_panning = False
             
-            if in_bounds(real_position) and not is_placing:
-                print("Placing!")
+            if in_bounds(real_position):
                 nearest_pos = Vector2(
                     nearest_n(real_position.x, data.TILE_SIZE),
                     nearest_n(real_position.y, data.TILE_SIZE)
                 )
 
+                #get the nearest tile to our click
                 nearest_tile = data.tiles[int(nearest_pos.y / data.TILE_SIZE)][int(nearest_pos.x / data.TILE_SIZE)]
-                nearest_tile = Tile(nearest_pos, (0, 255, 0))
-
-                is_placing = True
+                
+                #use the current tool's operation with it
+                current_tool(nearest_tile)
     #reached when we are not panning or placing; if the mouse isn't down, we couldn't possibly be doing either
     else:
         last_offset = data.offset.copy()
@@ -92,5 +127,9 @@ while True:
     for y in range(data.CANVAS_SIZE[1]):
         for x in range(data.CANVAS_SIZE[0]):
             data.tiles[y][x].update(VIEWPORT)
+
+    #testing
+    pencil_button.update(DISPLAY)
+    eraser_button.update(DISPLAY)
 
     pygame.display.update()
