@@ -27,8 +27,8 @@ BACKGROUND_COLOR = (40, 40, 40)
 FOREGROUND_COLOR = (83, 83, 83)
 VIEWPORT_COLOR = (255, 255, 255)
 
-pencil_icon = pygame.image.load('pencil.png').convert_alpha()
-eraser_icon = pygame.image.load('eraser.png').convert_alpha()
+pencil_icon = pygame.image.load('Assets/pencil.png').convert_alpha()
+eraser_icon = pygame.image.load('Assets/eraser.png').convert_alpha()
 
 last_offset = Vector2(0, 0)
 initial_mouse_pos = Vector2(0, 0)
@@ -67,6 +67,12 @@ for x in range(data.CANVAS_SIZE[0]):
     for y in range(data.CANVAS_SIZE[1]):
         tile.Tile(tile.DEFAULT, Vector2(x * data.TILE_SIZE, y * data.TILE_SIZE)) #make placeholder tile, should be customizable
 
+#center level draw area over viewport
+data.offset = Vector2(
+    (VIEWPORT_SIZE[0] - data.LEVEL_SIZE[0] * data.zoom) / 2,
+    (VIEWPORT_SIZE[1] - data.LEVEL_SIZE[1] * data.zoom) / 2
+)
+
 #button
 pencil_button = ui.Button(Vector2(40, 30), (45, 45), FOREGROUND_COLOR, pencil_icon, set_tool, pencil)
 eraser_button = ui.Button(Vector2(40 + 30 + 45, 30), (45, 45), FOREGROUND_COLOR, eraser_icon, set_tool, eraser)
@@ -90,8 +96,12 @@ while True:
     DISPLAY.blit(VIEWPORT, ((DISPLAY_SIZE[0] - VIEWPORT_SIZE[0]) / 2, 0))
     VIEWPORT.fill(BACKGROUND_COLOR)
 
-    #mouse position accounting for offset & zoom
-    real_position = (Vector2(pygame.mouse.get_pos()) / data.zoom) - data.offset - Vector2((DISPLAY_SIZE[0] - VIEWPORT_SIZE[0]), 0)
+    #mouse position within level
+    #NOTE math here is mathematically simplified version of original formula; future documentation will include its derivation
+    real_position = Vector2(
+        (2 * pygame.mouse.get_pos()[0] - DISPLAY_SIZE[0] + VIEWPORT_SIZE[0] - 2 * data.offset.x) / (2 * data.zoom),
+        (2 * pygame.mouse.get_pos()[1] - DISPLAY_SIZE[1] + VIEWPORT_SIZE[1] - 2 * data.offset.y) / (2 * data.zoom),
+    )
 
     #panning
     if pygame.mouse.get_pressed()[0]:
@@ -113,7 +123,7 @@ while True:
                 )
 
                 #get the nearest tile to our click
-                nearest_tile = data.tiles[int(nearest_pos.y / data.TILE_SIZE)][int(nearest_pos.x / data.TILE_SIZE)]
+                nearest_tile = data.tiles[int(nearest_pos.y / data.TILE_SIZE)][int(nearest_pos.x // data.TILE_SIZE)]
                 
                 #use the current tool's operation with it
                 current_tool(nearest_tile)
@@ -131,5 +141,6 @@ while True:
     #testing
     pencil_button.update(DISPLAY)
     eraser_button.update(DISPLAY)
-
+    print(real_position)
+   
     pygame.display.update()

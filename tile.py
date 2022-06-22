@@ -24,8 +24,8 @@ class Tile:
         self.color = info.color
 
         self.__rect = Rect(
-            (self.position.x + data.offset.x) * data.zoom,
-            (self.position.y + data.offset.y) * data.zoom,
+            (self.position.x * data.zoom + data.offset.x),
+            (self.position.y * data.zoom + data.offset.y),
             data.TILE_SIZE * data.zoom,
             data.TILE_SIZE * data.zoom
         )
@@ -34,8 +34,8 @@ class Tile:
         data.tiles[int(position.y / data.TILE_SIZE)][int(position.x / data.TILE_SIZE)] = self
 
     def update(self, display):
-        self.__rect.x = (self.position.x + data.offset.x) * data.zoom
-        self.__rect.y = (self.position.y + data.offset.y) * data.zoom
+        self.__rect.x = (self.position.x * data.zoom + data.offset.x)
+        self.__rect.y = (self.position.y * data.zoom + data.offset.y)
         self.__rect.width = data.TILE_SIZE * data.zoom
         self.__rect.height = data.TILE_SIZE * data.zoom
 
