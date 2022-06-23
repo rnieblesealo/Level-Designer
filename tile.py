@@ -1,4 +1,4 @@
-import data
+import statics
 
 from pygame.math import Vector2
 from pygame import draw, Rect
@@ -24,20 +24,20 @@ class Tile:
         self.color = info.color
 
         self.__rect = Rect(
-            (self.position.x * data.zoom + data.offset.x),
-            (self.position.y * data.zoom + data.offset.y),
-            data.TILE_SIZE * data.zoom,
-            data.TILE_SIZE * data.zoom
+            (self.position.x * statics.zoom + statics.offset.x),
+            (self.position.y * statics.zoom + statics.offset.y),
+            statics.TILE_SIZE * statics.zoom,
+            statics.TILE_SIZE * statics.zoom
         )
 
         #auto add to tile registry
-        data.tiles[int(position.y / data.TILE_SIZE)][int(position.x / data.TILE_SIZE)] = self
+        statics.tiles[int(position.y / statics.TILE_SIZE)][int(position.x / statics.TILE_SIZE)] = self
 
     def update(self, display):
-        self.__rect.x = (self.position.x * data.zoom + data.offset.x)
-        self.__rect.y = (self.position.y * data.zoom + data.offset.y)
-        self.__rect.width = data.TILE_SIZE * data.zoom
-        self.__rect.height = data.TILE_SIZE * data.zoom
+        self.__rect.x = (self.position.x * statics.zoom + statics.offset.x)
+        self.__rect.y = (self.position.y * statics.zoom + statics.offset.y)
+        self.__rect.width = statics.TILE_SIZE * statics.zoom
+        self.__rect.height = statics.TILE_SIZE * statics.zoom
 
         draw.rect(display, self.color, self.__rect)
 

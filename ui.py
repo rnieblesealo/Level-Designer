@@ -1,6 +1,6 @@
 import pygame
 import utils
-import data
+import statics
 
 from typing import Any, Callable
 from pygame import Surface, Rect, draw
@@ -48,7 +48,7 @@ class Button:
                             self.color[0] * 0.25, 
                             self.color[1] * 0.25, 
                             self.color[2] * 0.25
-                        ), 7.5 * data.delta_time)
+                        ), 7.5 * statics.delta_time)
                     self.__is_pressed = True
             else:
                 self.__is_pressed = False
@@ -56,7 +56,7 @@ class Button:
                     self.color[0] * 0.75, 
                     self.color[1] * 0.75, 
                     self.color[2] * 0.75
-                ), 7.5 * data.delta_time)
+                ), 7.5 * statics.delta_time)
         else:
             self.__color = self.color
 
