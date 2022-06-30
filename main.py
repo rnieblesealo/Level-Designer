@@ -1,3 +1,4 @@
+from select import select
 import pygame
 import numpy
 import sys
@@ -28,6 +29,7 @@ is_using = False
 # TOOLS -- TEMPORARY PLACEMENT HERE! ================================================
 
 selection = Rect(0, 0, 0, 0)
+selection_anchor = (0, 0)
 selection_buffer = [] #stores all selected objects
 
 def make_selection():
@@ -59,11 +61,26 @@ def eraser(_tile):
     _tile = tile.Tile(tile.DEFAULT, _tile.position)
 
 def marquee():
+    global selection
+    global selection_anchor
+    
     if not is_using:
-        selection.x = pygame.mouse.get_pos()[0] - statics.VIEWPORT_OFFSET[0]
-        selection.y = pygame.mouse.get_pos()[1] - statics.VIEWPORT_OFFSET[1]
-    selection.w = pygame.mouse.get_pos()[0] - statics.VIEWPORT_OFFSET[0] - selection.x
-    selection.h = pygame.mouse.get_pos()[1] - statics.VIEWPORT_OFFSET[1] - selection.y
+        selection_anchor = (
+            pygame.mouse.get_pos()[0] - statics.VIEWPORT_OFFSET[0], 
+            pygame.mouse.get_pos()[1] - statics.VIEWPORT_OFFSET[1]
+            )
+    
+    dx = pygame.mouse.get_pos()[0] - statics.VIEWPORT_OFFSET[0]
+    dy = pygame.mouse.get_pos()[1] - statics.VIEWPORT_OFFSET[1]
+    
+    # ? Why does this work?
+    selection = Rect(
+        selection_anchor[0],
+        selection_anchor[1],
+        dx - selection_anchor[0],
+        dy - selection_anchor[1]
+    )
+
     pygame.draw.rect(statics.VIEWPORT, statics.HIGHLIGHT_COLOR, selection, 1, 1)
 
 def set_tool(new_tool):
@@ -105,7 +122,7 @@ while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             sys.exit()
-        #TODO Figure out visual gridding bug (Zoom is disabled)
+        # TODO Figure out visual gridding bug (Zoom is disabled)
         # // elif event.type == pygame.MOUSEWHEEL:
         # //# data.zoom += event.y * 0.05 #zoom in according to mouse wheel
 
@@ -175,5 +192,7 @@ while True:
     #draw a semitransparent highlighter tile to indicate current block pointed at
     if statics.mouse_in_bounds():
         tile.highlight_hovered_tile()
+
+    print(selection)
 
     pygame.display.update()
