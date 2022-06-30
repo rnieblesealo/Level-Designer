@@ -1,3 +1,4 @@
+from select import select
 import pygame
 import numpy
 import sys
@@ -23,24 +24,32 @@ marquee_icon = pygame.image.load('Assets/marquee.png').convert_alpha()
 last_offset = Vector2(0, 0)
 initial_mouse_pos = Vector2(0, 0)
 is_panning = False
-
-def round_to_n(x: float | int, n: int):
-    return numpy.floor(x / n) * n
-
-def in_level_bounds(pos: tuple):
-    if (pos[0] >= 0 and pos[0] < statics.CANVAS_SIZE[0] * statics.TILE_SIZE) and (pos[1] >= 0 and pos[1] < statics.CANVAS_SIZE[1] * statics.TILE_SIZE):
-        return True
-    return False
-
-def get_tile_at_mouse():
-    nearest_pos = Vector2(
-        round_to_n(level_mouse_position.x, statics.TILE_SIZE),
-        round_to_n(level_mouse_position.y, statics.TILE_SIZE)
-    )
-
-    return statics.tiles[int(nearest_pos.y / statics.TILE_SIZE)][int(nearest_pos.x / statics.TILE_SIZE)]
+is_using = False
 
 # TOOLS -- TEMPORARY PLACEMENT HERE! ================================================
+
+selection = Rect(0, 0, 0, 0)
+selection_buffer = [] #stores all selected objects
+
+def make_selection():
+    for y in range(statics.CANVAS_SIZE[1]):
+        for x in range(statics.CANVAS_SIZE[0]):
+            if statics.tiles[y][x].rect.colliderect(selection):
+                selection_buffer.append(statics.tiles[y][x])
+                statics.tiles[y][x].selected = True
+
+def clear_selection():
+    if len(selection_buffer) == 0:
+        return
+    for tile in selection_buffer:
+        tile.selected = False
+    selection_buffer.clear() 
+
+def delete_all():
+    if len(selection_buffer) == 0:
+        return
+    for _tile in selection_buffer:
+        _tile = tile.Tile(tile.DEFAULT, _tile.position)
 
 def pencil(_tile):
     #replace tile w/selected one
@@ -50,14 +59,23 @@ def eraser(_tile):
     #replace operand tile w/blank tile
     _tile = tile.Tile(tile.DEFAULT, _tile.position)
 
-def marquee(_tile):
-    pass
+def marquee():
+    if not is_using:
+        selection.x = pygame.mouse.get_pos()[0] - statics.VIEWPORT_OFFSET[0]
+        selection.y = pygame.mouse.get_pos()[1] - statics.VIEWPORT_OFFSET[1]
+    selection.w = pygame.mouse.get_pos()[0] - statics.VIEWPORT_OFFSET[0] - selection.x
+    selection.h = pygame.mouse.get_pos()[1] - statics.VIEWPORT_OFFSET[1] - selection.y
+    pygame.draw.rect(statics.VIEWPORT, statics.HIGHLIGHT_COLOR, selection, 1, 1)
 
 def set_tool(new_tool):
-    global use_current_tool
-    use_current_tool = new_tool
+    global current_tool, is_using
+    
+    clear_selection() # Clear previous selection when we switch tools!
+    
+    is_using = False # Clear previous tool state
+    current_tool = new_tool
 
-use_current_tool = pencil
+current_tool = pencil
 
 # ===================================================================================
 
@@ -88,9 +106,9 @@ while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             sys.exit()
-        #TODO figure out visual gridding bug (zoom is disabled)
-        # elif event.type == pygame.MOUSEWHEEL:
-        #     # data.zoom += event.y * 0.05 #zoom in according to mouse wheel
+        #TODO Figure out visual gridding bug (Zoom is disabled)
+        # // elif event.type == pygame.MOUSEWHEEL:
+        # //# data.zoom += event.y * 0.05 #zoom in according to mouse wheel
 
     if pygame.key.get_pressed()[pygame.K_ESCAPE]:
         sys.exit()
@@ -100,13 +118,26 @@ while True:
     statics.VIEWPORT.fill(statics.BACKGROUND_COLOR)
     
     statics.delta_time = statics.CLOCK.tick(60) / 1000
+    statics.real_tile_size = statics.TILE_SIZE * statics.zoom
 
-    #mouse position within level
-    #NOTE math here is mathematically simplified version of original formula; future documentation will include its derivation
-    level_mouse_position = Vector2(
+    statics.real_mouse_position = Vector2(
         (2 * pygame.mouse.get_pos()[0] - statics.DISPLAY_SIZE[0] + statics.VIEWPORT_SIZE[0] - 2 * statics.offset.x) / (2 * statics.zoom),
         (2 * pygame.mouse.get_pos()[1] - statics.DISPLAY_SIZE[1] + statics.VIEWPORT_SIZE[1] - 2 * statics.offset.y) / (2 * statics.zoom),
     )
+    
+    pygame.transform.scale(tile.h_tile, (statics.real_tile_size, statics.real_tile_size))
+    pygame.transform.scale(tile.s_tile, (statics.real_tile_size, statics.real_tile_size))
+
+    #update tiles
+    for y in range(statics.CANVAS_SIZE[1]):
+        for x in range(statics.CANVAS_SIZE[0]):
+            statics.tiles[y][x].update(statics.VIEWPORT)
+
+    #horizontal layout group update
+    for element in hlg_0.elements:
+        element.update(statics.DISPLAY)
+    for element in hlg_1.elements:
+        element.update(statics.DISPLAY)
 
     #panning
     if pygame.mouse.get_pressed()[0]:
@@ -120,32 +151,30 @@ while True:
             last_offset = statics.offset.copy()
             is_panning = False
             
-            if in_level_bounds(level_mouse_position):                
-                use_current_tool(get_tile_at_mouse())
+            if statics.mouse_in_bounds():                                
+                if current_tool != marquee:
+                    current_tool(statics.get_tile_at_mouse()) # ? For now? Maybe refine tools to be a class containing metadata
+                else:
+                    clear_selection() # Clear previous selection when we initiate marquee again; this indicates we would like to start a new one
+                    current_tool()
+                is_using = True
+
     #reached when we are not panning or placing; if the mouse isn't down, we couldn't possibly be doing either
     else:
+        # Make a selection when selection tool is released!
+        if current_tool == marquee and is_using:
+            make_selection()
+
         last_offset = statics.offset.copy()
         is_panning = False
-
-    #update tiles
-    for y in range(statics.CANVAS_SIZE[1]):
-        for x in range(statics.CANVAS_SIZE[0]):
-            statics.tiles[y][x].update(statics.VIEWPORT)
+        is_using = False
+    
+    #tool shortcuts
+    if pygame.key.get_pressed()[pygame.K_BACKSPACE]:
+        delete_all()
 
     #draw a semitransparent highlighter tile to indicate current block pointed at
-    if in_level_bounds(level_mouse_position):
-        h_tile = pygame.Surface(statics.TILE_DIMENSIONS * statics.zoom, pygame.SRCALPHA)
-        h_tile.fill(statics.HIGHLIGHT_COLOR)
-        statics.VIEWPORT.blit(h_tile, (
-                round_to_n(level_mouse_position.x, statics.TILE_SIZE) * statics.zoom + statics.offset.x,
-                round_to_n(level_mouse_position.y, statics.TILE_SIZE) * statics.zoom + statics.offset.y,
-            )
-        )
+    if statics.mouse_in_bounds():
+        tile.highlight_hovered_tile()
 
-    #horizontal layout group update
-    for element in hlg_0.elements:
-        element.update(statics.DISPLAY)
-    for element in hlg_1.elements:
-        element.update(statics.DISPLAY)
-   
     pygame.display.update()
