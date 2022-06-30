@@ -113,10 +113,8 @@ eraser_button = ui.Button(Vector2(0, 0), (45, 45), statics.FOREGROUND_COLOR, era
 marquee_button = ui.Button(Vector2(0, 0), (45, 45), statics.FOREGROUND_COLOR, marquee_icon, set_tool, marquee)
 
 #horizontal layout group, implement vertical LG to store them all, for now, we will have multiple w/manually calculated positions
-handle_0 = Rect(0, 25, statics.SIDEBAR_SIZE, 45)
-handle_1 = Rect(0, 25 + 25 + handle_0.height, statics.SIDEBAR_SIZE, 45)
-hlg_0 = ui.HorizontalLayoutGroup([pencil_button, eraser_button], handle_0, 30)
-hlg_1 = ui.HorizontalLayoutGroup([marquee_button], handle_1, 30)
+hlg_0 = ui.HorizontalLayoutGroup([pencil_button, eraser_button], Vector2(0, 25), statics.SIDEBAR_SIZE, 30)
+hlg_1 = ui.HorizontalLayoutGroup([marquee_button], Vector2(0, 25 + 25 + 45), statics.SIDEBAR_SIZE, 30)
 
 while True:
     for event in pygame.event.get():
@@ -166,14 +164,12 @@ while True:
         else:
             last_offset = statics.offset.copy()
             is_panning = False
-            
-            if statics.mouse_in_bounds():                                
-                if current_tool != marquee:
-                    current_tool(statics.get_tile_at_mouse()) # ? For now? Maybe refine tools to be a class containing metadata
-                else:
-                    clear_selection() # Clear previous selection when we initiate marquee again; this indicates we would like to start a new one
-                    current_tool()
-                is_using = True
+            if current_tool == marquee: # We may use selection tools when our mouse is not in bounds; it has a better feel this way
+                clear_selection() # Clear previous selection when we initiate marquee again; this indicates we would like to start a new one
+                current_tool()
+            elif statics.mouse_in_bounds():
+                current_tool(statics.get_tile_at_mouse()) # ? For now? Maybe refine tools to be a class containing metadata
+            is_using = True
 
     #reached when we are not panning or placing; if the mouse isn't down, we couldn't possibly be doing either
     else:
@@ -192,7 +188,5 @@ while True:
     #draw a semitransparent highlighter tile to indicate current block pointed at
     if statics.mouse_in_bounds():
         tile.highlight_hovered_tile()
-
-    print(selection)
 
     pygame.display.update()
