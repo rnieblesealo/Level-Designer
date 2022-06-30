@@ -112,9 +112,19 @@ pencil_button = ui.Button(Vector2(0, 0), (45, 45), statics.FOREGROUND_COLOR, pen
 eraser_button = ui.Button(Vector2(0, 0), (45, 45), statics.FOREGROUND_COLOR, eraser_icon, set_tool, eraser)
 marquee_button = ui.Button(Vector2(0, 0), (45, 45), statics.FOREGROUND_COLOR, marquee_icon, set_tool, marquee)
 
-#horizontal layout group, implement vertical LG to store them all, for now, we will have multiple w/manually calculated positions
-hlg_0 = ui.HorizontalLayoutGroup([pencil_button, eraser_button], Vector2(0, 25), statics.SIDEBAR_SIZE, 30)
-hlg_1 = ui.HorizontalLayoutGroup([marquee_button], Vector2(0, 25 + 25 + 45), statics.SIDEBAR_SIZE, 30)
+# Make button layout groups
+btn_row_0 = ui.HorizontalLayoutGroup([pencil_button, eraser_button], Vector2(0, 0), statics.SIDEBAR_SIZE, 30)
+btn_row_1 = ui.HorizontalLayoutGroup([marquee_button], Vector2(0, 0), statics.SIDEBAR_SIZE, 30)
+
+btn_col = ui.VerticalLayoutGroup(
+    [
+        btn_row_0,
+        btn_row_1
+    ],
+    Vector2(0, 0),
+    statics.DISPLAY_SIZE[1],
+    30
+)
 
 while True:
     for event in pygame.event.get():
@@ -147,11 +157,10 @@ while True:
         for x in range(statics.CANVAS_SIZE[0]):
             statics.tiles[y][x].update(statics.VIEWPORT)
 
-    #horizontal layout group update
-    for element in hlg_0.elements:
-        element.update(statics.DISPLAY)
-    for element in hlg_1.elements:
-        element.update(statics.DISPLAY)
+    # Layout group update
+    for y in range(len(btn_col.elements)):
+        for x in range(len(btn_col.elements[y].elements)):
+            btn_col.elements[y].elements[x].update(statics.DISPLAY)
 
     #panning
     if pygame.mouse.get_pressed()[0]:

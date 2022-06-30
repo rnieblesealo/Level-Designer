@@ -77,6 +77,36 @@ class Button(Graphic):
         if self.icon != None:
             display.blit(self.icon, (self.rect.center[0] - self.icon.get_width() / 2, self.rect.center[1] - self.icon.get_height() / 2))
 
+class VerticalLayoutGroup(Graphic):
+    # ! All elements within group must have the same height!
+
+    elements: list
+    spacing: int
+    padding: int
+    element_height: int
+
+    def __init__(self, elements: list, position: Vector2, height: Vector2, spacing: int) -> None:
+        self.elements = elements
+        self.spacing = spacing
+        self.element_height = self.elements[0].dimensions[1]
+        
+        super().__init__(position, (self.elements[0].dimensions[0], height))
+        
+        self.padding = (self.dimensions[1] - (self.element_height * len(self.elements)) - (self.spacing * (len(self.elements) - 1))) / 2
+
+        # Organize elements using LG properties
+        self.organize()
+
+    # ! Call only once, NEVER every frame!
+    def organize(self):
+        for y in range(len(self.elements)):
+            self.elements[y].set_position(
+                self.position.x,
+                self.position.y + self.padding + self.element_height * y + self.spacing * y,
+            )
+            if type(self.elements[y]) == HorizontalLayoutGroup or type(self.elements[y]) == VerticalLayoutGroup:
+                self.elements[y].organize() # Organize child LG elements to match new organizations
+
 class HorizontalLayoutGroup(Graphic):
     # ! All elements within group must have the same width!
 
@@ -90,7 +120,7 @@ class HorizontalLayoutGroup(Graphic):
         self.spacing = spacing
         self.element_width = self.elements[0].dimensions[0]
         
-        super().__init__(position, (width, self.element_width))
+        super().__init__(position, (width, self.elements[0].dimensions[1]))
         
         self.padding = (self.dimensions[0] - (self.element_width * len(self.elements)) - (self.spacing * (len(self.elements) - 1))) / 2
 
@@ -104,3 +134,5 @@ class HorizontalLayoutGroup(Graphic):
                 self.position.x + self.padding + self.element_width * x + self.spacing * x,
                 self.position.y
             )
+            if type(self.elements[x]) == HorizontalLayoutGroup or type(self.elements[x]) == VerticalLayoutGroup:
+                self.elements[x].organize() # Organize child LG elements to match new organizations
