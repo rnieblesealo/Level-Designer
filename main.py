@@ -1,4 +1,3 @@
-from select import select
 import pygame
 import numpy
 import sys
