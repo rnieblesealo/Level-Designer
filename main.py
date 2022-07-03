@@ -1,6 +1,4 @@
-from select import select
 import pygame
-import numpy
 import sys
 
 import statics
@@ -54,11 +52,11 @@ def delete_all():
 
 def pencil(_tile):
     #replace tile w/selected one
-    _tile = tile.Tile(tile.SAMPLE, _tile.position)
+    _tile = tile.Tile(tile.swatch, _tile.position)
 
 def eraser(_tile):
     #replace operand tile w/blank tile
-    _tile = tile.Tile(tile.DEFAULT, _tile.position)
+    _tile = tile.Tile(tile.erased, _tile.position)
 
 def marquee():
     global selection
@@ -95,19 +93,23 @@ current_tool = pencil
 
 # ===================================================================================
 
-#fill canvas with empty tiles
-statics.tiles = numpy.empty((statics.CANVAS_SIZE[1], statics.CANVAS_SIZE[0]), dtype=tile.Tile)
-for x in range(statics.CANVAS_SIZE[0]):
-    for y in range(statics.CANVAS_SIZE[1]):
-        tile.Tile(tile.DEFAULT, Vector2(x * statics.TILE_SIZE, y * statics.TILE_SIZE)) #make placeholder tile, should be customizable
+# Convert alpha of tile textures
+tile.t_empty.convert_alpha()
+tile.t_grass.convert_alpha()
+tile.t_stone.convert_alpha()
+tile.t_water.convert_alpha()
+tile.t_sky.convert_alpha()
 
-#center level draw area over viewport
+# Center level draw area over viewport
 statics.offset = Vector2(
     (statics.VIEWPORT_SIZE[0] - statics.LEVEL_SIZE[0] * statics.zoom) / 2,
     (statics.VIEWPORT_SIZE[1] - statics.LEVEL_SIZE[1] * statics.zoom) / 2
 )
 
-#button
+# Fill canvas with desired tile
+tile.fill(tile.sky)
+
+# Set up tool buttons
 pencil_button = ui.Button(Vector2(0, 0), (45, 45), statics.FOREGROUND_COLOR, pencil_icon, set_tool, pencil)
 eraser_button = ui.Button(Vector2(0, 0), (45, 45), statics.FOREGROUND_COLOR, eraser_icon, set_tool, eraser)
 marquee_button = ui.Button(Vector2(0, 0), (45, 45), statics.FOREGROUND_COLOR, marquee_icon, set_tool, marquee)
@@ -198,4 +200,8 @@ while True:
     if statics.mouse_in_bounds():
         tile.highlight_hovered_tile()
 
+    pygame.draw.circle(statics.DISPLAY, (255, 0, 0), statics.real_mouse_position, 5)
+
     pygame.display.update()
+
+    print(statics.real_tile_size)

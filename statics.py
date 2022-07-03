@@ -9,10 +9,11 @@ VIEWPORT_OFFSET = (
     (DISPLAY_SIZE[1] - VIEWPORT_SIZE[1]) / 2
     )
 
-TILE_SIZE = 64
+TILE_SIZE = 16
 TILE_DIMENSIONS = pygame.math.Vector2(TILE_SIZE, TILE_SIZE)
 CANVAS_SIZE = (20, 10) #x, y represent amount of tiles, not pixel width!
 LEVEL_SIZE = (CANVAS_SIZE[0] * TILE_SIZE, CANVAS_SIZE[1] * TILE_SIZE) #actual size of entire level
+SWATCH_LIMIT = 16 # How many tiles can we use to draw?
 
 BACKGROUND_COLOR = (40, 40, 40)
 FOREGROUND_COLOR = (83, 83, 83)
@@ -26,7 +27,7 @@ CLOCK = None
 
 delta_time = 0
 tiles = None
-zoom = 0.5
+zoom = 2
 offset = pygame.math.Vector2(0, 0)
 real_tile_size = 0
 real_mouse_position = pygame.math.Vector2(0, 0)
