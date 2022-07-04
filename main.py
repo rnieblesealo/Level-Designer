@@ -49,7 +49,7 @@ def delete_all():
     if len(selection_buffer) == 0:
         return
     for _tile in selection_buffer:
-        _tile = tile.Tile(tile.DEFAULT, _tile.position)
+        _tile = tile.Tile(tile.erased, _tile.position)
 
 def pencil(_tile):
     #replace tile w/selected one
@@ -91,12 +91,6 @@ def set_tool(new_tool):
     current_tool = new_tool
 
 current_tool = pencil
-
-# SWATCHES - TEMPORARY PLACEMENT HERE! ==============================================
-
-
-
-# ===================================================================================
 
 # Convert alpha of tile textures
 tile.t_empty.convert_alpha()
