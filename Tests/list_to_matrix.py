@@ -9,15 +9,18 @@ We repeat the procedure for all elements in the 1D iterable.
 
 import numpy
 
-symbols = ('#', '$', '^', '*')
+symbols = ('#', '$', '^', '*', 'A', 'B', 'C')
 matrix = numpy.full((5, 5), ' ', str)
 
-for i in range(len(symbols)):
+# Utilize a method like this one; its the most comprehensive (and brain-efficient) way of doing things!
+def place_at_empty(symbol):
     for y in range(matrix.shape[0]):
         for x in range(matrix.shape[1]):
             if matrix[y][x] == ' ':
-                matrix[y][x] = symbols[i]
-                break # Leave x loop
-        break # Leave y loop
+                matrix[y][x] = symbol
+                return
+
+for symbol in symbols:
+    place_at_empty(symbol)
 
 print(matrix)

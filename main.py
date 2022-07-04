@@ -1,4 +1,5 @@
 import pygame
+import numpy
 import sys
 
 import statics
@@ -91,6 +92,10 @@ def set_tool(new_tool):
 
 current_tool = pencil
 
+# SWATCHES - TEMPORARY PLACEMENT HERE! ==============================================
+
+
+
 # ===================================================================================
 
 # Convert alpha of tile textures
@@ -128,6 +133,38 @@ btn_col = ui.VerticalLayoutGroup(
     30
 )
 
+# Make swatch buttons
+# TODO FINALIZE AND COMMENT THIS CODE
+def place_at_empty(item, matrix, empty):
+    # ! Only works for 2D arrays
+    if len(matrix.shape) > 2:
+        return
+    for y in range(matrix.shape[0]):
+        for x in range(matrix.shape[1]):
+            if matrix[y][x] == empty:
+                matrix[y][x] = item
+                return
+
+# TODO Merge these two operations, there is redundancy (it works as indended, though; this is why it has been committed as is)
+swatch_palette = numpy.empty((4, 3), dtype=ui.Button)
+for i in range(len(tile.swatches)):
+    place_at_empty(
+        ui.Button(Vector2(0, 0), (32, 32), statics.FOREGROUND_COLOR, tile.swatches[i].texture, tile.set_swatch, tile.swatches[i]),
+        swatch_palette,
+        None
+    )
+
+elements = []
+for i in range(swatch_palette.shape[0]):
+    if swatch_palette[i][0] == None:
+        break
+    row = []
+    for j in range(swatch_palette.shape[1]):
+        if swatch_palette[i][j] != None:
+            row.append(swatch_palette[i][j])
+    elements.append(ui.HorizontalLayoutGroup(row, Vector2(0, 0), statics.SIDEBAR_SIZE, 30))
+hlg = ui.VerticalLayoutGroup(elements, Vector2(statics.VIEWPORT_SIZE[0] + statics.SIDEBAR_SIZE, 0), statics.DISPLAY_SIZE[1], 30) # TODO Add static reference to top-right corner of right foreground panel's position
+
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -163,6 +200,11 @@ while True:
     for y in range(len(btn_col.elements)):
         for x in range(len(btn_col.elements[y].elements)):
             btn_col.elements[y].elements[x].update(statics.DISPLAY)
+
+    # Layout group update
+    for y in range(len(hlg.elements)):
+        for x in range(len(hlg.elements[y].elements)):
+            hlg.elements[y].elements[x].update(statics.DISPLAY)
 
     #panning
     if pygame.mouse.get_pressed()[0]:
@@ -200,8 +242,4 @@ while True:
     if statics.mouse_in_bounds():
         tile.highlight_hovered_tile()
 
-    pygame.draw.circle(statics.DISPLAY, (255, 0, 0), statics.real_mouse_position, 5)
-
     pygame.display.update()
-
-    print(statics.real_tile_size)

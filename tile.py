@@ -76,11 +76,11 @@ class Tile:
         if self.selected:
             display.blit(s_tile, self.__r_pos)
 
-def fill(t_info: TileInfo):
+def fill(fill_tile: TileInfo):
     statics.tiles = numpy.empty((statics.CANVAS_SIZE[1], statics.CANVAS_SIZE[0]), dtype=Tile)
     for x in range(statics.CANVAS_SIZE[0]):
         for y in range(statics.CANVAS_SIZE[1]):
-            Tile(t_info, Vector2(x * statics.TILE_SIZE, y * statics.TILE_SIZE)) #make placeholder tile, should be customizable
+            Tile(fill_tile, Vector2(x * statics.TILE_SIZE, y * statics.TILE_SIZE)) #make placeholder tile, should be customizable
 
 def highlight_hovered_tile():
     statics.VIEWPORT.blit(h_tile, (
@@ -88,6 +88,10 @@ def highlight_hovered_tile():
             statics.round_to_n(statics.real_mouse_position.y, statics.TILE_SIZE) * statics.zoom + statics.offset.y
         )
     )
+
+def set_swatch(new_swatch: TileInfo):
+    global swatch
+    swatch = new_swatch
 
 MISSING = TileInfo(-1, t_empty) # * Fallback tile for errors
 
