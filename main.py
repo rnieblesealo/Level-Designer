@@ -9,6 +9,8 @@ import ui
 from pygame import Rect
 from pygame.math import Vector2
 
+from level_handler import LevelData
+
 pygame.init()
 pygame.display.set_caption("Tile Drawing Test")
 
@@ -92,21 +94,28 @@ def set_tool(new_tool):
 
 current_tool = pencil
 
-# Convert alpha of tile textures
-tile.t_empty.convert_alpha()
-tile.t_grass.convert_alpha()
-tile.t_stone.convert_alpha()
-tile.t_water.convert_alpha()
-tile.t_sky.convert_alpha()
-
 # Center level draw area over viewport
 statics.offset = Vector2(
     (statics.VIEWPORT_SIZE[0] - statics.LEVEL_SIZE[0] * statics.zoom) / 2,
     (statics.VIEWPORT_SIZE[1] - statics.LEVEL_SIZE[1] * statics.zoom) / 2
 )
 
+# * TEMPORARY: Make tiles
+
+tile.MISSING = tile.TileInfo(-1, 'empty.png')
+
+tile.sky = tile.TileInfo(0, 'sky.png')
+tile.grass = tile.TileInfo(1, 'grass.png')
+tile.water = tile.TileInfo(2, 'water.png')
+tile.stone = tile.TileInfo(3, 'stone.png')
+tile.dirt = tile.TileInfo(4, 'dirt.png')
+
 # Fill canvas with desired tile
 tile.fill(tile.sky)
+
+# ! DEBUGGING: Save level
+data = LevelData()
+data.save(statics.tiles, 'sample')
 
 # Set up tool buttons
 pencil_button = ui.Button(Vector2(0, 0), (45, 45), statics.FOREGROUND_COLOR, pencil_icon, set_tool, pencil)
@@ -143,7 +152,7 @@ def place_at_empty(item, matrix, empty):
 swatch_palette = numpy.empty((4, 3), dtype=ui.Button)
 for i in range(len(tile.swatches)):
     place_at_empty(
-        ui.Button(Vector2(0, 0), (32, 32), statics.FOREGROUND_COLOR, tile.swatches[i].texture, tile.set_swatch, tile.swatches[i]),
+        ui.Button(Vector2(0, 0), (32, 32), statics.FOREGROUND_COLOR, tile.swatches[i].get_texture(), tile.set_swatch, tile.swatches[i]),
         swatch_palette,
         None
     )
@@ -182,8 +191,8 @@ while True:
         (2 * pygame.mouse.get_pos()[1] - statics.DISPLAY_SIZE[1] + statics.VIEWPORT_SIZE[1] - 2 * statics.offset.y) / (2 * statics.zoom),
     )
     
-    pygame.transform.scale(tile.h_tile, (statics.real_tile_size, statics.real_tile_size))
-    pygame.transform.scale(tile.s_tile, (statics.real_tile_size, statics.real_tile_size))
+    pygame.transform.scale(tile.highlight_tile, (statics.real_tile_size, statics.real_tile_size))
+    pygame.transform.scale(tile.select_tile, (statics.real_tile_size, statics.real_tile_size))
 
     #update tiles
     for y in range(statics.CANVAS_SIZE[1]):
