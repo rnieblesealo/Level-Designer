@@ -95,19 +95,13 @@ def set_swatch(new_swatch: TileInfo):
 
 MISSING = TileInfo(-1, t_empty) # * Fallback tile for errors
 
-sky = TileInfo(0, t_sky)
-grass = TileInfo(1, t_grass)
-water = TileInfo(2, t_water)
-stone = TileInfo(2, t_stone)
-dirt = TileInfo(3, t_dirt)
+sky = None
+grass = None
+water = None
+stone = None
+dirt = None
 
-swatches = (
-    sky,
-    grass,
-    water,
-    stone,
-    dirt
-)
+swatches = []
 
-swatch = swatches[1]
-erased = sky
+swatch = None
+erased = None

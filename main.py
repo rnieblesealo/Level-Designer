@@ -105,6 +105,27 @@ statics.offset = Vector2(
     (statics.VIEWPORT_SIZE[1] - statics.LEVEL_SIZE[1] * statics.zoom) / 2
 )
 
+# * TEMPORARY: Make tiles
+
+tile.MISSING = tile.TileInfo(-1, 'empty.png')
+
+tile.sky = tile.TileInfo(0, 'sky.png')
+tile.grass = tile.TileInfo(1, 'grass.png')
+tile.water = tile.TileInfo(2, 'water.png')
+tile.stone = tile.TileInfo(3, 'stone.png')
+tile.dirt = tile.TileInfo(4, 'dirt.png')
+
+tile.swatches = [
+    tile.sky,
+    tile.grass,
+    tile.water,
+    tile.stone,
+    tile.dirt
+]
+
+tile.swatch = tile.swatches[0]
+tile.erased = tile.MISSING
+
 # Fill canvas with desired tile
 tile.fill(tile.sky)
 
