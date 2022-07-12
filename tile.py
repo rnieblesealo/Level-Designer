@@ -1,10 +1,12 @@
+from level_handler import LevelData
 import statics
 import pygame
 import numpy
+import pickle
 
 from random import randint
-from pygame.math import Vector2
 from pygame import Rect
+from pygame.math import Vector2
 
 class TileInfo:
     texture = None
@@ -13,8 +15,10 @@ class TileInfo:
     def __init__(self, texture = None) -> None:
         self._id = generate_id()
         self.texture = statics.get_asset(texture)
+        self.cache_texture()
 
-        # Cache texture
+    # Cache texture
+    def cache_texture(self):
         texture_cache[self._id] = pygame.image.load(self.texture).convert_alpha()
 
     # Retrieve texture from cache
@@ -72,7 +76,25 @@ def fill_level(fill_tile: TileInfo):
     statics.tiles = numpy.empty((statics.CANVAS_SIZE[1], statics.CANVAS_SIZE[0]), dtype=Tile)
     for x in range(statics.CANVAS_SIZE[0]):
         for y in range(statics.CANVAS_SIZE[1]):
-            Tile(fill_tile, Vector2(x * statics.TILE_SIZE, y * statics.TILE_SIZE)) #make placeholder tile, should be customizable
+            Tile(fill_tile, Vector2(x * statics.TILE_SIZE, y * statics.TILE_SIZE)) # Fill entire canvas with a specific tile
+
+def load_level(path):
+    # Load level file from path
+    level_data = None
+    with open(path, 'rb') as level_file:
+        level_data = pickle.load(level_file)
+
+    # Cache textures from loaded tiles
+    for tile in level_data.tiles.values():
+        tile.cache_texture()
+
+    # TODO : Ensure there are no duplicate ID's!
+
+    # Build canvas using level data
+    statics.tiles = numpy.empty((statics.CANVAS_SIZE[1], statics.CANVAS_SIZE[0]), dtype=Tile)
+    for x in range(statics.CANVAS_SIZE[0]):
+        for y in range(statics.CANVAS_SIZE[1]):
+            Tile(level_data.tiles[level_data.level[y][x]], Vector2(x * statics.TILE_SIZE, y * statics.TILE_SIZE)) # Place tile as reflected in LevelData
 
 def add_to_swatches(tile_info):
     # Make tiles from info in args

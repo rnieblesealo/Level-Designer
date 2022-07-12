@@ -9,8 +9,6 @@ import ui
 from pygame import Rect
 from pygame.math import Vector2
 
-from level_handler import LevelData
-
 pygame.init()
 pygame.display.set_caption("Tile Drawing Test")
 
@@ -105,10 +103,6 @@ tile.add_to_swatches(['sky.png', 'grass.png', 'dirt.png', 'stone.png', 'water.pn
 
 # Fill canvas with desired tile
 tile.fill_level(tile.DEFAULT)
-
-# ! DEBUGGING: Save level
-data = LevelData()
-data.save(statics.tiles, 'sample')
 
 # Set up tool buttons
 pencil_button = ui.Button(Vector2(0, 0), (45, 45), statics.FOREGROUND_COLOR, pencil_icon, set_tool, pencil)

@@ -7,7 +7,7 @@ class LevelData:
     level = None
     tiles = None
 
-    def save(self, tile_array, file_name = 'my_level'):
+    def make(self, tile_array, file_name = 'my_level'):
         self.level = numpy.full(tile_array.shape, -1, dtype=int) # Fill level with fallback tile ID by default
         self.tiles = {}
         
