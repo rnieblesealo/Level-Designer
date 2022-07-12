@@ -13,10 +13,10 @@ class LevelData:
         
         for y in range(tile_array.shape[0]):
             for x in range(tile_array.shape[1]):
-                self.level[y][x] = tile_array[y][x].info.tag # Construct level as 2D int array, where ints represent tile's ID
+                self.level[y][x] = tile_array[y][x].info._id # Construct level as 2D int array, where ints represent tile's ID
                 
-                if tile_array[y][x].info.tag not in self.tiles:
-                    self.tiles[tile_array[y][x].info.tag] = tile_array[y][x].info # Save TileInfo of tiles included in level
+                if tile_array[y][x].info._id not in self.tiles:
+                    self.tiles[tile_array[y][x].info._id] = tile_array[y][x].info # Save TileInfo of tiles included in level
 
         # Save this class as a .lvl file
         with open('{N}.{X}'.format(N=file_name, X=EXTENSION_NAME), 'wb') as f:

@@ -49,5 +49,5 @@ def get_tile_at_mouse():
 def mouse_in_bounds():
     return in_level_bounds(real_mouse_position)
 
-def get_texture(file_name):
+def get_asset(file_name):
     return '{P}{N}'.format(P=ASSETS_PATH, N=file_name)

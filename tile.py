@@ -8,19 +8,18 @@ from pygame import Rect
 
 class TileInfo:
     texture = None
-    tag = 0
+    _id = 0
 
-    def __init__(self, tag = randint(0, statics.SWATCH_LIMIT), texture = None) -> None:
-        self.tag = tag
-        self.texture = statics.get_texture(texture)
+    def __init__(self, texture = None) -> None:
+        self._id = generate_id()
+        self.texture = statics.get_asset(texture)
 
         # Cache texture
-        if tag not in texture_cache:
-            texture_cache[tag] = pygame.image.load(self.texture).convert_alpha()
+        texture_cache[self._id] = pygame.image.load(self.texture).convert_alpha()
 
     # Retrieve texture from cache
     def get_texture(self):
-        return texture_cache[self.tag]
+        return texture_cache[self._id]
 
 class Tile:
     info = None
@@ -69,11 +68,21 @@ class Tile:
         if self.selected:
             display.blit(select_tile, self.__level_position)
 
-def fill(fill_tile: TileInfo):
+def fill_level(fill_tile: TileInfo):
     statics.tiles = numpy.empty((statics.CANVAS_SIZE[1], statics.CANVAS_SIZE[0]), dtype=Tile)
     for x in range(statics.CANVAS_SIZE[0]):
         for y in range(statics.CANVAS_SIZE[1]):
             Tile(fill_tile, Vector2(x * statics.TILE_SIZE, y * statics.TILE_SIZE)) #make placeholder tile, should be customizable
+
+def add_to_swatches(tile_info):
+    # Make tiles from info in args
+    for info in tile_info:
+        swatches.append(TileInfo(info))
+    
+    # Assign required tiles if they do not exist
+    global DEFAULT, swatch
+    if len(swatches) > 0 and DEFAULT == None:
+        DEFAULT = swatch = swatches[0] # * Syntactic sugar for assigning same value to multiple variables!
 
 def highlight_hovered_tile():
     statics.VIEWPORT.blit(highlight_tile, (
@@ -86,6 +95,13 @@ def set_swatch(new_swatch: TileInfo):
     global swatch
     swatch = new_swatch
 
+def generate_id():
+    prospect = randint(0, statics.SWATCH_LIMIT)
+    for swatch in swatches:
+        if swatch._id == prospect:
+            return generate_id()
+    return prospect
+
 # Initialize texture cache
 texture_cache = {}
 
@@ -96,21 +112,9 @@ highlight_tile.fill(statics.HIGHLIGHT_COLOR)
 select_tile = pygame.Surface(statics.TILE_DIMENSIONS * statics.zoom, pygame.SRCALPHA)
 select_tile.fill(statics.SELECTED_COLOR)
 
-MISSING = None # Fallback tile for errors
+# Initialize swatches
+MISSING = None # Fallback tile forf errors
+DEFAULT = None # What the eraser draws
 
-sky = None
-grass = None
-water = None
-stone = None
-dirt = None
-
-swatches = [
-    sky,
-    grass,
-    water,
-    stone,
-    dirt
-]
-
-swatch = swatches[1]
-erased = sky
+swatches = []
+swatch = None
