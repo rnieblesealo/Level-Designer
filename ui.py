@@ -1,6 +1,9 @@
 import pygame
+import numpy
 import utils
 import statics
+import tile
+import ui
 
 from typing import Any, Callable
 from pygame import Surface, Rect, draw
@@ -26,8 +29,7 @@ class Graphic:
             self.dimensions[1]
         )
 
-    # ! Use these setters at all times!
-
+    # ! Use these setters at all times
     def set_position(self, x, y):
         self.position.x = x
         self.position.y = y
@@ -48,7 +50,7 @@ class Button(Graphic):
     __is_pressed = False
 
     def __init__(self, position: Vector2, dimensions: tuple, color: tuple, icon: Surface, function: Callable, argument: Any) -> None:
-        super().__init__(position, dimensions)
+        super().__init__(position if position != None else Vector2(0, 0), dimensions)
 
         self.color = color
         self.icon = icon
@@ -136,3 +138,45 @@ class HorizontalLayoutGroup(Graphic):
             )
             if type(self.elements[x]) == HorizontalLayoutGroup or type(self.elements[x]) == VerticalLayoutGroup:
                 self.elements[x].organize() # Organize child LG elements to match new organizations
+
+class TilePalette:
+    palette = None # Group in matrix format
+    group = None # VLG containing HLG's with palette elements
+    rows = None # Rows from palette    
+
+    def __init__(self, items, shape, button_size, pos, x_span, y_span, spacing) -> None:
+        # Make palette and group on initialize
+        self.make_palette(items, shape, button_size)
+        self.make_group(pos, x_span, y_span, spacing)
+    
+    def make_palette(self, items, shape, button_size):
+        self.palette = numpy.empty(shape, dtype=ui.Button) # Build empty matrix with passed shape
+        for i in range(len(items)):
+            button_i = ui.Button(Vector2(0, 0), button_size, statics.FOREGROUND_COLOR, items[i].get_texture(), tile.set_swatch, items[i])
+            statics.place_at_first_empty(button_i, self.palette, None) # Add button of each element to palette
+
+    def make_group(self, pos = statics.R_SIDEBAR_TOPLEFT, x_span = statics.SIDEBAR_SIZE, y_span = statics.DISPLAY_SIZE[1], spacing = 30):        
+        # Initialize rows manifest
+        self.rows = []
+        
+        # Make individual row horizontal layout groups
+        for i in range(self.palette.shape[0]):
+            if self.palette[i][0] == None: # Terminate group construction if next row is empty
+                break
+            row_i = []
+            for j in range(self.palette.shape[1]):
+                if self.palette[i][j] != None:
+                    row_i.append(self.palette[i][j])
+                else:
+                    break
+            row_i_hlg = ui.HorizontalLayoutGroup(row_i, Vector2(0, 0), x_span, spacing)
+            self.rows.append(row_i_hlg)
+        
+        # Place all into vertical layout group NOTE At topleft of screen by dafault
+        self.group = ui.VerticalLayoutGroup(self.rows, pos, y_span, spacing)
+
+    def update(self):
+        # Update all buttons
+        for y in range(len(self.group.elements)):
+            for x in range(len(self.group.elements[y].elements)):
+                self.group.elements[y].elements[x].update(statics.DISPLAY)

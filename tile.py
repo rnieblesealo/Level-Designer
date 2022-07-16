@@ -1,4 +1,3 @@
-from level_handler import LevelData
 import statics
 import pygame
 import numpy
@@ -8,13 +7,15 @@ from random import randint
 from pygame import Rect
 from pygame.math import Vector2
 
+# TODO When levels are loaded, ID conflicts between TileInfos may arise; amend this.
+
 class TileInfo:
     texture = None
     _id = 0
 
     def __init__(self, texture = None) -> None:
         self._id = generate_id()
-        self.texture = statics.get_asset(texture)
+        self.texture = statics.get_asset_path(texture)
         self.cache_texture()
 
     # Cache texture
@@ -108,8 +109,8 @@ def add_to_swatches(tile_info):
 
 def highlight_hovered_tile():
     statics.VIEWPORT.blit(highlight_tile, (
-            statics.n_round(statics.real_mouse_position.x, statics.TILE_SIZE) * statics.zoom + statics.offset.x,
-            statics.n_round(statics.real_mouse_position.y, statics.TILE_SIZE) * statics.zoom + statics.offset.y
+            statics.n_round(statics.real_mouse_pos.x, statics.TILE_SIZE) * statics.zoom + statics.offset.x,
+            statics.n_round(statics.real_mouse_pos.y, statics.TILE_SIZE) * statics.zoom + statics.offset.y
         )
     )
 
@@ -117,7 +118,13 @@ def set_swatch(new_swatch: TileInfo):
     global swatch
     swatch = new_swatch
 
+def update_tiles():
+    for y in range(statics.CANVAS_SIZE[1]):
+        for x in range(statics.CANVAS_SIZE[0]):
+            statics.tiles[y][x].update(statics.VIEWPORT)
+
 def generate_id():
+    # Generate a random unique tile ID
     prospect = randint(0, statics.SWATCH_LIMIT)
     for swatch in swatches:
         if swatch._id == prospect:
