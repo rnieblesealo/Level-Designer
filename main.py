@@ -19,6 +19,7 @@ statics.CLOCK = pygame.time.Clock()
 
 # Initialize app components
 assets.load()
+tools.load()
 
 # ! Test code; remove later; add swatches and fill level
 tile.add_to_swatches(['sky.png', 'grass.png', 'dirt.png', 'stone.png', 'water.png'])
@@ -30,24 +31,11 @@ statics.offset = Vector2(
     (statics.VIEWPORT_SIZE[1] - statics.LEVEL_SIZE[1] * statics.zoom) / 2
 )
 
-# Set up tool buttons NOTE Position is (0, 0) because we will auto-set it with layout groups
-BTN_pencil = ui.Button(Vector2(0, 0), (45, 45), statics.FOREGROUND_COLOR, assets.ICON_pencil, tools.set_tool, tools.t_pencil)
-BTN_eraser = ui.Button(Vector2(0, 0), (45, 45), statics.FOREGROUND_COLOR, assets.ICON_eraser, tools.set_tool, tools.t_eraser)
-BTN_marquee = ui.Button(Vector2(0, 0), (45, 45), statics.FOREGROUND_COLOR, assets.ICON_marquee, tools.set_tool, tools.t_marquee)
-
-# Make button layout groups
-btn_row_0 = ui.HorizontalLayoutGroup([BTN_pencil, BTN_eraser], Vector2(0, 0), statics.SIDEBAR_SIZE, 30)
-btn_row_1 = ui.HorizontalLayoutGroup([BTN_marquee], Vector2(0, 0), statics.SIDEBAR_SIZE, 30)
-
-btn_col = ui.VerticalLayoutGroup(
-    [btn_row_0, btn_row_1],
-    Vector2(0, 0),
-    statics.DISPLAY_SIZE[1],
-    30
-)
+# Make tool palette
+tool_palette = ui.ToolPalette(items = tools.toolbar, shape = (2, 2), button_size = (45, 45), position = Vector2(0, 0), dimensions = (statics.SIDEBAR_SIZE, statics.DISPLAY_SIZE[1]), spacing = 30)
 
 # Make tile palette
-tile_palette = ui.TilePalette(items = tile.swatches, shape = (4, 3), button_size = (32, 32), pos = statics.R_SIDEBAR_TOPLEFT, x_span = statics.SIDEBAR_SIZE, y_span = statics.DISPLAY_SIZE[1], spacing = 30)
+tile_palette = ui.TilePalette(items = tile.swatches, shape = (4, 3), button_size = (32, 32), position = statics.R_SIDEBAR_TOPLEFT, dimensions = (statics.SIDEBAR_SIZE, statics.DISPLAY_SIZE[1]), spacing = 30)
 
 # MAIN LOOP
 while True:
@@ -81,12 +69,7 @@ while True:
     # Update tiles
     tile.update_tiles()
 
-    # Button layout group update TODO Rework this similarly to how the tile palette works
-    for y in range(len(btn_col.elements)):
-        for x in range(len(btn_col.elements[y].elements)):
-            btn_col.elements[y].elements[x].update(statics.DISPLAY)
-
-    # Tile palette update
+    tool_palette.update()
     tile_palette.update()
 
     # Panning
@@ -100,17 +83,15 @@ while True:
         else:
             statics.last_pan_offset = statics.offset.copy()
             statics.is_panning = False
-            if tools.use_current_tool == tools.t_marquee: # We may use selection tools when our mouse is not in bounds; it has a better feel this way
+            if tools.current.is_selector: # We may use selection tools when our mouse is not in bounds; it has a better feel this way
                 tools.clear_selection() # Clear previous selection when we initiate marquee again; this indicates we would like to start a new one
-                tools.use_current_tool()
-            elif statics.mouse_in_bounds():
-                tools.use_current_tool(statics.get_tile_at_mouse()) # ? For now? Maybe refine tools to be a class containing metadata
+            tools.current.use()
             statics.is_using = True
 
     # Reached when we are not panning or placing; if the mouse isn't down, we couldn't possibly be doing either
     else:
         # Make a selection when selection tool is released!
-        if tools.use_current_tool == tools.t_marquee and statics.is_using:
+        if tools.current.is_selector and statics.is_using:
             tools.make_selection()
 
         statics.last_pan_offset = statics.offset.copy()

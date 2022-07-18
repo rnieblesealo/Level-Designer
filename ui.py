@@ -2,6 +2,7 @@ import pygame
 import numpy
 import utils
 import statics
+import tools
 import tile
 import ui
 
@@ -9,7 +10,7 @@ from typing import Any, Callable
 from pygame import Surface, Rect, draw
 from pygame.math import Vector2
 
-class Graphic:
+class UIElement:
     position: Vector2
     dimensions: tuple
     rect: Rect
@@ -39,7 +40,7 @@ class Graphic:
         self.rect.w = w
         self.rect.h = h
 
-class Button(Graphic):
+class Button(UIElement):
     color = tuple
     icon: Surface
 
@@ -79,7 +80,7 @@ class Button(Graphic):
         if self.icon != None:
             display.blit(self.icon, (self.rect.center[0] - self.icon.get_width() / 2, self.rect.center[1] - self.icon.get_height() / 2))
 
-class VerticalLayoutGroup(Graphic):
+class VerticalLayoutGroup(UIElement):
     # ! All elements within group must have the same height!
 
     elements: list
@@ -106,10 +107,11 @@ class VerticalLayoutGroup(Graphic):
                 self.position.x,
                 self.position.y + self.padding + self.element_height * y + self.spacing * y,
             )
+            
             if type(self.elements[y]) == HorizontalLayoutGroup or type(self.elements[y]) == VerticalLayoutGroup:
                 self.elements[y].organize() # Organize child LG elements to match new organizations
 
-class HorizontalLayoutGroup(Graphic):
+class HorizontalLayoutGroup(UIElement):
     # ! All elements within group must have the same width!
 
     elements: list
@@ -136,26 +138,31 @@ class HorizontalLayoutGroup(Graphic):
                 self.position.x + self.padding + self.element_width * x + self.spacing * x,
                 self.position.y
             )
+            
             if type(self.elements[x]) == HorizontalLayoutGroup or type(self.elements[x]) == VerticalLayoutGroup:
                 self.elements[x].organize() # Organize child LG elements to match new organizations
 
-class TilePalette:
-    palette = None # Group in matrix format
-    group = None # VLG containing HLG's with palette elements
-    rows = None # Rows from palette    
+class ButtonPalette(UIElement):
+    palette = None
+    group = None
+    rows = None
+    
+    spacing = 0
 
-    def __init__(self, items, shape, button_size, pos, x_span, y_span, spacing) -> None:
+    def __init__(self, items, shape, button_size, position, dimensions, spacing) -> None:
+        super().__init__(position, dimensions)
+
+        self.spacing = spacing
+        
         # Make palette and group on initialize
         self.make_palette(items, shape, button_size)
-        self.make_group(pos, x_span, y_span, spacing)
+        self.make_group()
     
+    # ! Add procedure to make buttons as override; by default, make_palette() only initializes palette matrix!
     def make_palette(self, items, shape, button_size):
         self.palette = numpy.empty(shape, dtype=ui.Button) # Build empty matrix with passed shape
-        for i in range(len(items)):
-            button_i = ui.Button(Vector2(0, 0), button_size, statics.FOREGROUND_COLOR, items[i].get_texture(), tile.set_swatch, items[i])
-            statics.place_at_first_empty(button_i, self.palette, None) # Add button of each element to palette
 
-    def make_group(self, pos = statics.R_SIDEBAR_TOPLEFT, x_span = statics.SIDEBAR_SIZE, y_span = statics.DISPLAY_SIZE[1], spacing = 30):        
+    def make_group(self):        
         # Initialize rows manifest
         self.rows = []
         
@@ -169,14 +176,30 @@ class TilePalette:
                     row_i.append(self.palette[i][j])
                 else:
                     break
-            row_i_hlg = ui.HorizontalLayoutGroup(row_i, Vector2(0, 0), x_span, spacing)
+            row_i_hlg = ui.HorizontalLayoutGroup(row_i, Vector2(0, 0), self.dimensions[0], self.spacing)
             self.rows.append(row_i_hlg)
         
         # Place all into vertical layout group NOTE At topleft of screen by dafault
-        self.group = ui.VerticalLayoutGroup(self.rows, pos, y_span, spacing)
+        self.group = ui.VerticalLayoutGroup(self.rows, self.position, self.dimensions[1], self.spacing)
 
     def update(self):
         # Update all buttons
         for y in range(len(self.group.elements)):
             for x in range(len(self.group.elements[y].elements)):
                 self.group.elements[y].elements[x].update(statics.DISPLAY)
+
+class TilePalette(ButtonPalette):    
+    def make_palette(self, items, shape, button_size):
+        super().make_palette(items, shape, button_size)
+        
+        for i in range(len(items)):
+            button_i = ui.Button(Vector2(0, 0), button_size, statics.FOREGROUND_COLOR, items[i].get_texture(), tile.set_swatch, items[i])
+            statics.place_at_first_empty(button_i, self.palette, None) # Add button of each element to palette
+
+class ToolPalette(ButtonPalette):
+    def make_palette(self, items, shape, button_size):
+        super().make_palette(items, shape, button_size)
+
+        for i in range(len(items)):
+            button_i = ui.Button(Vector2(0, 0), button_size, statics.FOREGROUND_COLOR, items[i].icon, tools.set_tool, items[i])
+            statics.place_at_first_empty(button_i, self.palette, None) # Add button of each element to palette

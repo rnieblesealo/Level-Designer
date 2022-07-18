@@ -106,6 +106,8 @@ def add_to_swatches(tile_info):
     global DEFAULT, swatch
     if len(swatches) > 0 and DEFAULT == None:
         DEFAULT = swatch = swatches[0] # * Syntactic sugar for assigning same value to multiple variables!
+    if len(swatches) > 1:
+        swatch = swatches[1]
 
 def highlight_hovered_tile():
     statics.VIEWPORT.blit(highlight_tile, (
