@@ -1,7 +1,6 @@
 import statics
 import pygame
 import numpy
-import pickle
 
 from random import randint
 from pygame import Rect
@@ -10,17 +9,17 @@ from pygame.math import Vector2
 # TODO When levels are loaded, ID conflicts between TileInfos may arise; amend this.
 
 class TileInfo:
-    texture = None
+    texture_ref = None
     _id = 0
 
     def __init__(self, texture = None) -> None:
-        self._id = generate_id()
-        self.texture = statics.get_asset_path(texture)
+        self._id = generate_id() # Generate a random ID for this new tile
+        self.texture_ref = statics.get_asset_path(texture)
         self.cache_texture()
 
     # Cache texture
     def cache_texture(self):
-        texture_cache[self._id] = pygame.image.load(self.texture).convert_alpha()
+        texture_cache[self._id] = pygame.image.load(self.texture_ref).convert_alpha()
 
     # Retrieve texture from cache
     def get_texture(self):
@@ -74,41 +73,58 @@ class Tile:
             display.blit(select_tile, self.__level_position)
 
 def fill_level(fill_tile: TileInfo):
+    # Init and fill entire canvas with a specific tile
     statics.tiles = numpy.empty((statics.CANVAS_SIZE[1], statics.CANVAS_SIZE[0]), dtype=Tile)
     for x in range(statics.CANVAS_SIZE[0]):
         for y in range(statics.CANVAS_SIZE[1]):
-            Tile(fill_tile, Vector2(x * statics.TILE_SIZE, y * statics.TILE_SIZE)) # Fill entire canvas with a specific tile
+            Tile(
+                fill_tile,
+                Vector2(x * statics.TILE_SIZE, y * statics.TILE_SIZE)
+            )
 
-def load_level(path):
-    # Load level file from path
-    level_data = None
-    with open(path, 'rb') as level_file:
-        level_data = pickle.load(level_file)
-
-    # Cache textures from loaded tiles
-    for tile in level_data.tiles.values():
-        tile.cache_texture()
-
-    # TODO : Ensure there are no duplicate ID's!
-
-    # Build canvas using level data
+def load_level(level_data):
+    # Init and fill entire canvas using level data
     statics.tiles = numpy.empty((statics.CANVAS_SIZE[1], statics.CANVAS_SIZE[0]), dtype=Tile)
     for x in range(statics.CANVAS_SIZE[0]):
         for y in range(statics.CANVAS_SIZE[1]):
-            Tile(level_data.tiles[level_data.level[y][x]], Vector2(x * statics.TILE_SIZE, y * statics.TILE_SIZE)) # Place tile as reflected in LevelData
+            Tile(
+                level_data.swatches[level_data.level[y][x]],
+                Vector2(x * statics.TILE_SIZE, y * statics.TILE_SIZE)
+            )
 
-def add_to_swatches(tile_info):
-    # Make tiles from info in args
-    for info in tile_info:
-        swatches.append(TileInfo(info))
-    
-    # Assign required tiles if they do not exist
+def load_swatches_from_level(level_data):
+    # Load all swatches from the level into texture cache, they are for sure not going to have dupes as none exist at this stage
+    # ! Load these swatches from LevelData first, and the ones from SwatchData second!
+    for swatch in level_data.swatches.values():
+        swatches.append(swatch)
+        swatch.cache_texture()
+
+def load_swatches_from_data(swatch_data):
+    # Load swatches that do not exist in the level but exist in swatch data; that is, the ones that aren't dupes of the one found in level data
+    # ! Load swatches from level first!
+    for key in swatch_data.swatches.keys():
+        if key not in texture_cache:
+            swatches.append(swatch_data.swatches[key])
+            swatch_data.swatches[key].cache_texture()
+
+    try_assign_default_swatch()
+
+def try_assign_default_swatch():
     global DEFAULT, swatch
     if len(swatches) > 0 and DEFAULT == None:
         DEFAULT = swatch = swatches[0] # * Syntactic sugar for assigning same value to multiple variables!
     if len(swatches) > 1:
         swatch = swatches[1]
 
+def add_to_swatches(tile_details):
+    # Make tiles from info in args
+    for info in tile_details:
+        swatches.append(TileInfo(info))
+    
+    # Assign required tiles if they do not exist
+    try_assign_default_swatch()
+
+    
 def highlight_hovered_tile():
     statics.VIEWPORT.blit(highlight_tile, (
             statics.n_round(statics.real_mouse_pos.x, statics.TILE_SIZE) * statics.zoom + statics.offset.x,
@@ -144,7 +160,7 @@ select_tile = pygame.Surface(statics.TILE_DIMENSIONS * statics.zoom, pygame.SRCA
 select_tile.fill(statics.SELECTED_COLOR)
 
 # Initialize swatches
-MISSING = None # Fallback tile forf errors
+MISSING = None # Fallback tile for errors
 DEFAULT = None # What the eraser draws
 
 swatches = []

@@ -6,6 +6,7 @@ import assets
 import tools
 import tile
 import ui
+import level_handler
 
 from pygame.math import Vector2
 
@@ -21,9 +22,18 @@ statics.CLOCK = pygame.time.Clock()
 assets.load()
 tools.load()
 
-# ! Test code; remove later; add swatches and fill level
-tile.add_to_swatches(['sky.png', 'grass.png', 'dirt.png', 'stone.png', 'water.png'])
-tile.fill_level(tile.DEFAULT)
+# # ! Test code; perform a blank start
+# tile.add_to_swatches(['sky.png', 'grass.png', 'dirt.png', 'stone.png', 'water.png'])
+# tile.fill_level(fill_tile=tile.DEFAULT)
+
+# ! Test code; perform a load
+level_data = level_handler.LevelData.load()
+swatch_data = level_handler.SwatchData.load()
+
+tile.load_swatches_from_level(level_data)
+tile.load_swatches_from_data(swatch_data)
+
+tile.load_level(level_data)
 
 # Default offset such that level draw area is centered
 statics.offset = Vector2(
@@ -41,7 +51,13 @@ tile_palette = ui.TilePalette(items = tile.swatches, shape = (4, 3), button_size
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
+            # ! Test code; perform a save
+            print(statics.tiles.shape)
+            level_handler.LevelData.save(statics.tiles)
+            level_handler.SwatchData.save(tile.swatches)
+            
             sys.exit()
+        
         # TODO Figure out visual gridding bug (Zoom is disabled)
         # // elif event.type == pygame.MOUSEWHEEL:
         # //# data.zoom += event.y * 0.05 #zoom in according to mouse wheel
