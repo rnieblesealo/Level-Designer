@@ -1,6 +1,9 @@
 import numpy
 import pickle
 
+import statics
+import tile
+
 LEVEL_DATA_EXT = 'lvl'
 SWATCH_DATA_EXT = 'swt'
 
@@ -76,3 +79,7 @@ class SwatchData:
     def show(self):
         for swatch in self.swatches.values():
             print('ID: {ID}, Texture Filename: {T}'.format(ID=swatch._id, T=swatch.texture_ref))
+
+def save_project():
+    LevelData.save(statics.tiles)
+    SwatchData.save(tile.swatches)

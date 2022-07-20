@@ -11,7 +11,7 @@ import level_handler
 from pygame.math import Vector2
 
 pygame.init()
-pygame.display.set_caption("Tile Drawing Test")
+pygame.display.set_caption("LevelPy")
 
 # Initialize backend components
 statics.DISPLAY = pygame.display.set_mode(statics.DISPLAY_SIZE, pygame.DOUBLEBUF)
@@ -32,8 +32,10 @@ swatch_data = level_handler.SwatchData.load()
 
 tile.load_swatches_from_level(level_data)
 tile.load_swatches_from_data(swatch_data)
-
 tile.load_level(level_data)
+
+# ! Load UI; must be done AFTER level loading, as swatches must be loaded first to make swatch palette.
+ui.load()
 
 # Default offset such that level draw area is centered
 statics.offset = Vector2(
@@ -41,21 +43,10 @@ statics.offset = Vector2(
     (statics.VIEWPORT_SIZE[1] - statics.LEVEL_SIZE[1] * statics.zoom) / 2
 )
 
-# Make tool palette
-tool_palette = ui.ToolPalette(items = tools.toolbar, shape = (2, 2), button_size = (45, 45), position = Vector2(0, 0), dimensions = (statics.SIDEBAR_SIZE, statics.DISPLAY_SIZE[1]), spacing = 30)
-
-# Make tile palette
-tile_palette = ui.TilePalette(items = tile.swatches, shape = (4, 3), button_size = (32, 32), position = statics.R_SIDEBAR_TOPLEFT, dimensions = (statics.SIDEBAR_SIZE, statics.DISPLAY_SIZE[1]), spacing = 30)
-
 # MAIN LOOP
 while True:
     for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            # ! Test code; perform a save
-            print(statics.tiles.shape)
-            level_handler.LevelData.save(statics.tiles)
-            level_handler.SwatchData.save(tile.swatches)
-            
+        if event.type == pygame.QUIT:            
             sys.exit()
         
         # TODO Figure out visual gridding bug (Zoom is disabled)
@@ -67,7 +58,7 @@ while True:
 
     # Update backend components
     statics.DISPLAY.fill(statics.FOREGROUND_COLOR)
-    statics.DISPLAY.blit(statics.VIEWPORT, (statics.SIDEBAR_SIZE, 0))
+    statics.DISPLAY.blit(statics.VIEWPORT, (statics.SIDEBAR_WIDTH, 0))
     statics.VIEWPORT.fill(statics.BACKGROUND_COLOR)
     
     # Update dynamic app static variables
@@ -85,8 +76,8 @@ while True:
     # Update tiles
     tile.update_tiles()
 
-    tool_palette.update()
-    tile_palette.update()
+    # Update UI
+    ui.update()
 
     # Panning
     if pygame.mouse.get_pressed()[0]:

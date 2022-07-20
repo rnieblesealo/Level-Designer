@@ -4,8 +4,8 @@ import numpy
 # Program Constant Variables
 DISPLAY_SIZE = (1280, 720)
 VIEWPORT_SIZE = (900, 720)
-SIDEBAR_SIZE = (DISPLAY_SIZE[0] - VIEWPORT_SIZE[0]) / 2
-R_SIDEBAR_TOPLEFT = pygame.math.Vector2(VIEWPORT_SIZE[0] + SIDEBAR_SIZE, 0)
+SIDEBAR_WIDTH = (DISPLAY_SIZE[0] - VIEWPORT_SIZE[0]) / 2
+R_SIDEBAR_TOPLEFT = pygame.math.Vector2(VIEWPORT_SIZE[0] + SIDEBAR_WIDTH, 0)
 VIEWPORT_OFFSET = ((DISPLAY_SIZE[0] - VIEWPORT_SIZE[0]) / 2, (DISPLAY_SIZE[1] - VIEWPORT_SIZE[1]) / 2)
 
 TILE_SIZE = 16                                                          # Size of a tile in pixels
@@ -15,11 +15,13 @@ LEVEL_SIZE = (CANVAS_SIZE[0] * TILE_SIZE, CANVAS_SIZE[1] * TILE_SIZE)   # Pixel 
 SWATCH_LIMIT = 16                                                       # Limit to amount of tiles we can use to draw
 ASSETS_PATH = 'Assets/'                                                 # Filepath where tile assets are located
 
-BACKGROUND_COLOR = (40, 40, 40)
-FOREGROUND_COLOR = (83, 83, 83)
+BACKGROUND_COLOR = (36, 42, 56)
+FOREGROUND_COLOR = (78, 89, 111)
 VIEWPORT_COLOR = (255, 255, 255)
 HIGHLIGHT_COLOR = (255, 255, 255, 100)
 SELECTED_COLOR = (255, 255, 0, 100)
+POSITIVE_COLOR = (39, 179, 118)
+NEGATIVE_COLOR = (191, 33, 47)
 
 DISPLAY = None
 VIEWPORT = None

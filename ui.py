@@ -5,6 +5,8 @@ import statics
 import tools
 import tile
 import ui
+import assets
+import level_handler
 
 from typing import Any, Callable
 from pygame import Surface, Rect, draw
@@ -14,6 +16,7 @@ class UIElement:
     position: Vector2
     dimensions: tuple
     rect: Rect
+    updates = False # Does this UI element implement an update() function?
 
     def __init__(self, rect: Rect) -> None:
         self.position = rect.topleft
@@ -29,6 +32,10 @@ class UIElement:
             self.dimensions[0],
             self.dimensions[1]
         )
+
+    # ! Must call in ALL child objects on init!
+    def check_if_updates(self):
+        self.updates = True if getattr(self, 'update', None) != None else False
 
     # ! Use these setters at all times
     def set_position(self, x, y):
@@ -52,19 +59,23 @@ class Button(UIElement):
 
     def __init__(self, position: Vector2, dimensions: tuple, color: tuple, icon: Surface, function: Callable, argument: Any) -> None:
         super().__init__(position if position != None else Vector2(0, 0), dimensions)
+        self.check_if_updates()
 
         self.color = color
         self.icon = icon
         self.function = function
         self.argument = argument
                 
-    def update(self, display: Surface):
+    def update(self):
         # Scan for clicks
         if self.rect.collidepoint(pygame.mouse.get_pos()):
             if pygame.mouse.get_pressed()[0]:
                 if not self.__is_pressed:
                     if self.function != None:
-                        self.function(self.argument)
+                        if self.argument != None:
+                            self.function(self.argument)
+                        else:
+                            self.function() 
                         self.__color = utils.lerp_rgb(self.__color, (self.color[0] * 0.25, self.color[1] * 0.25, self.color[2] * 0.25), 7.5 * statics.delta_time)
                         self.__is_pressed = True
             else:
@@ -74,11 +85,11 @@ class Button(UIElement):
             self.__color = self.color
 
         # Draw background
-        draw.rect(display, self.__color, self.rect)
+        draw.rect(statics.DISPLAY, self.__color, self.rect)
         
         # Draw icon at center
         if self.icon != None:
-            display.blit(self.icon, (self.rect.center[0] - self.icon.get_width() / 2, self.rect.center[1] - self.icon.get_height() / 2))
+            statics.DISPLAY.blit(self.icon, (self.rect.center[0] - self.icon.get_width() / 2, self.rect.center[1] - self.icon.get_height() / 2))
 
 class VerticalLayoutGroup(UIElement):
     # ! All elements within group must have the same height!
@@ -93,6 +104,7 @@ class VerticalLayoutGroup(UIElement):
         self.spacing = spacing
         
         super().__init__(position, (self.elements[0].dimensions[0], height))
+        self.check_if_updates()
         
         # Organize elements using LG properties
         self.organize()
@@ -111,6 +123,12 @@ class VerticalLayoutGroup(UIElement):
             if type(self.elements[y]) == HorizontalLayoutGroup or type(self.elements[y]) == VerticalLayoutGroup:
                 self.elements[y].organize() # Organize child LG elements to match new organizations
 
+    def update(self):
+        # Update children of this layout group if they define an argumentless update() function
+        for element in self.elements:
+            if element.updates:
+                element.update()
+
 class HorizontalLayoutGroup(UIElement):
     # ! All elements within group must have the same width!
 
@@ -124,6 +142,7 @@ class HorizontalLayoutGroup(UIElement):
         self.spacing = spacing
         
         super().__init__(position, (width, self.elements[0].dimensions[1]))
+        self.check_if_updates()
         
         # Organize elements using LG properties
         self.organize()
@@ -142,6 +161,12 @@ class HorizontalLayoutGroup(UIElement):
             if type(self.elements[x]) == HorizontalLayoutGroup or type(self.elements[x]) == VerticalLayoutGroup:
                 self.elements[x].organize() # Organize child LG elements to match new organizations
 
+    def update(self):
+        # Update children of this layout group if they define an argumentless update() function
+        for element in self.elements:
+            if element.updates:
+                element.update()
+
 class ButtonPalette(UIElement):
     palette = None
     group = None
@@ -151,6 +176,7 @@ class ButtonPalette(UIElement):
 
     def __init__(self, items, shape, button_size, position, dimensions, spacing) -> None:
         super().__init__(position, dimensions)
+        self.check_if_updates()
 
         self.spacing = spacing
         
@@ -184,9 +210,7 @@ class ButtonPalette(UIElement):
 
     def update(self):
         # Update all buttons
-        for y in range(len(self.group.elements)):
-            for x in range(len(self.group.elements[y].elements)):
-                self.group.elements[y].elements[x].update(statics.DISPLAY)
+        self.group.update()
 
 class TilePalette(ButtonPalette):    
     def make_palette(self, items, shape, button_size):
@@ -203,3 +227,27 @@ class ToolPalette(ButtonPalette):
         for i in range(len(items)):
             button_i = ui.Button(Vector2(0, 0), button_size, statics.FOREGROUND_COLOR, items[i].icon, tools.set_tool, items[i])
             statics.place_at_first_empty(button_i, self.palette, None) # Add button of each element to palette
+
+tool_palette = None
+tile_palette = None
+
+save_button = None
+load_button = None
+save_buttons = None
+
+def load():
+    global tool_palette, tile_palette, save_button, load_button, save_buttons
+    
+    # Initialize UI components
+    tool_palette = ui.ToolPalette(items = tools.toolbar, shape = (2, 2), button_size = (45, 45), position = Vector2(0, 0), dimensions = (statics.SIDEBAR_WIDTH, statics.DISPLAY_SIZE[1]), spacing = 30)
+    tile_palette = ui.TilePalette(items = tile.swatches, shape = (4, 3), button_size = (32, 32), position = statics.R_SIDEBAR_TOPLEFT, dimensions = (statics.SIDEBAR_WIDTH, statics.DISPLAY_SIZE[1]), spacing = 30)
+
+    save_button = ui.Button(Vector2(0, 0), (statics.SIDEBAR_WIDTH / 2, 45), statics.POSITIVE_COLOR, assets.ICON_save, level_handler.save_project, None)
+    load_button = ui.Button(Vector2(0, 0), (statics.SIDEBAR_WIDTH / 2, 45), statics.NEGATIVE_COLOR, assets.ICON_load, print, "Not yet implemented!")
+    save_buttons = ui.HorizontalLayoutGroup([save_button, load_button], Vector2(0, statics.DISPLAY_SIZE[1] - 45), statics.SIDEBAR_WIDTH, 0)
+
+def update():
+    # Update UI componentss
+    tool_palette.update()
+    tile_palette.update()
+    save_buttons.update()
