@@ -9,6 +9,7 @@ import assets
 import level_handler
 
 from typing import Any, Callable
+from tkinter import filedialog
 from pygame import Surface, Rect, draw
 from pygame.math import Vector2
 
@@ -243,7 +244,7 @@ def load():
     tile_palette = ui.TilePalette(items = tile.swatches, shape = (4, 3), button_size = (32, 32), position = statics.R_SIDEBAR_TOPLEFT, dimensions = (statics.SIDEBAR_WIDTH, statics.DISPLAY_SIZE[1]), spacing = 30)
 
     save_button = ui.Button(Vector2(0, 0), (statics.SIDEBAR_WIDTH / 2, 45), statics.POSITIVE_COLOR, assets.ICON_save, level_handler.save_project, None)
-    load_button = ui.Button(Vector2(0, 0), (statics.SIDEBAR_WIDTH / 2, 45), statics.NEGATIVE_COLOR, assets.ICON_load, print, "Not yet implemented!")
+    load_button = ui.Button(Vector2(0, 0), (statics.SIDEBAR_WIDTH / 2, 45), statics.NEGATIVE_COLOR, assets.ICON_load, level_handler.load_project, None)
     save_buttons = ui.HorizontalLayoutGroup([save_button, load_button], Vector2(0, statics.DISPLAY_SIZE[1] - 45), statics.SIDEBAR_WIDTH, 0)
 
 def update():

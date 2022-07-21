@@ -89,7 +89,7 @@ def set_tool(new_tool):
     statics.is_using = False # Clear previous tool state
     current = new_tool
 
-def load():
+def initialize():
     # Load all tool icons
     Pencil.icon = assets.ICON_pencil
     Eraser.icon = assets.ICON_eraser

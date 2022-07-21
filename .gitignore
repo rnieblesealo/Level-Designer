@@ -141,3 +141,4 @@ cython_debug/
 *.txt
 *.lvl
 *.swt
+*.lproj

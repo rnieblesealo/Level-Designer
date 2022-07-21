@@ -13,7 +13,8 @@ TILE_DIMENSIONS = pygame.math.Vector2(TILE_SIZE, TILE_SIZE)             # Shorth
 CANVAS_SIZE = (20, 10)                                                  # Canvas size where (x, y) represent amount of tiles for each axis
 LEVEL_SIZE = (CANVAS_SIZE[0] * TILE_SIZE, CANVAS_SIZE[1] * TILE_SIZE)   # Pixel size of entire level
 SWATCH_LIMIT = 16                                                       # Limit to amount of tiles we can use to draw
-ASSETS_PATH = 'Assets/'                                                 # Filepath where tile assets are located
+PROJECT_ASSETS_PATH = 'Project Assets/'                                 # Filepath where project assets are located
+PROGRAM_ASSETS_PATH = 'Program Assets/'                                 # Filepath where program assets are located
 
 BACKGROUND_COLOR = (36, 42, 56)
 FOREGROUND_COLOR = (78, 89, 111)
@@ -70,5 +71,8 @@ def get_tile_at_mouse():
 def mouse_in_bounds():
     return in_level_bounds(real_mouse_pos)
 
-def get_asset_path(file_name):
-    return '{P}{N}'.format(P=ASSETS_PATH, N=file_name)
+def get_project_asset(file_name):
+    return '{P}{N}'.format(P=PROJECT_ASSETS_PATH, N=file_name)
+
+def get_program_asset(file_name):
+    return '{P}{N}'.format(P=PROGRAM_ASSETS_PATH, N=file_name)

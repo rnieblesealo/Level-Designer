@@ -6,7 +6,6 @@ import assets
 import tools
 import tile
 import ui
-import level_handler
 
 from pygame.math import Vector2
 
@@ -19,22 +18,11 @@ statics.VIEWPORT = pygame.Surface(statics.VIEWPORT_SIZE)
 statics.CLOCK = pygame.time.Clock()
 
 # Initialize app components
-assets.load()
-tools.load()
+assets.initialize()
+tools.initialize()
+tile.initialize()
 
-# # ! Test code; perform a blank start
-# tile.add_to_swatches(['sky.png', 'grass.png', 'dirt.png', 'stone.png', 'water.png'])
-# tile.fill_level(fill_tile=tile.DEFAULT)
-
-# ! Test code; perform a load
-level_data = level_handler.LevelData.load()
-swatch_data = level_handler.SwatchData.load()
-
-tile.load_swatches_from_level(level_data)
-tile.load_swatches_from_data(swatch_data)
-tile.load_level(level_data)
-
-# ! Load UI; must be done AFTER level loading, as swatches must be loaded first to make swatch palette.
+# ! Load UI; must always be done AFTER level loading, as swatches must be loaded first to make swatch palette
 ui.load()
 
 # Default offset such that level draw area is centered
@@ -66,7 +54,7 @@ while True:
     statics.real_tile_size = statics.TILE_SIZE * statics.zoom
     statics.real_mouse_pos = Vector2(
         (2 * pygame.mouse.get_pos()[0] - statics.DISPLAY_SIZE[0] + statics.VIEWPORT_SIZE[0] - 2 * statics.offset.x) / (2 * statics.zoom),
-        (2 * pygame.mouse.get_pos()[1] - statics.DISPLAY_SIZE[1] + statics.VIEWPORT_SIZE[1] - 2 * statics.offset.y) / (2 * statics.zoom),
+        (2 * pygame.mouse.get_pos()[1] - statics.DISPLAY_SIZE[1] + statics.VIEWPORT_SIZE[1] - 2 * statics.offset.y) / (2 * statics.zoom), # * See notes for formula derivation
     )
     
     # Scale highlight tiles to match current tile scale

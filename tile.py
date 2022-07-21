@@ -1,6 +1,9 @@
 import statics
 import pygame
 import numpy
+import os
+
+import utils
 
 from random import randint
 from pygame import Rect
@@ -9,17 +12,52 @@ from pygame.math import Vector2
 # TODO When levels are loaded, ID conflicts between TileInfos may arise; amend this.
 
 class TileInfo:
-    texture_ref = None
+    texture_ref = None # ! COMPLETE path to texture, not just name!
+    is_program_texture = False
+    r_texture_ref = None # ! Active texture reference; may differ from main texture ref in cases where main is missing
     _id = 0
 
-    def __init__(self, texture = None) -> None:
+    def __init__(self, texture = None, is_program_asset = False) -> None:
         self._id = generate_id() # Generate a random ID for this new tile
-        self.texture_ref = statics.get_asset_path(texture)
+        self.is_program_texture = is_program_asset
+    
+        if self.is_program_texture:
+            self.texture_ref = statics.get_program_asset(texture)
+        else:
+            self.texture_ref = statics.get_project_asset(texture)
+            
         self.cache_texture()
+
+    def check_texture_ref(self):
+        # If texture ref is not found, try to search for one in project assets
+        if not os.path.exists(self.texture_ref):
+            # First, get the raw name of the file by splitting at every / and grabbing the last substring, which should be the file name
+            substrings = self.texture_ref.split('/')
+            key = substrings[len(substrings) - 1]
+            
+            print(key)
+
+            # Search every filename in respective assets folder for that key; if it is found, make a new texture ref with it
+            directory = statics.PROGRAM_ASSETS_PATH if self.is_program_texture else statics.PROJECT_ASSETS_PATH
+            found = False
+            for path in os.listdir(directory):
+                if path.find(key):
+                    self.texture_ref = statics.get_project_asset(key)
+                    self.r_texture_ref = statics.get_project_asset(key)
+                    found = True
+            
+            # If nothing is found, assign a missing placeholder texture :( NOTE The original texture ref is still retained!
+            if not found:
+                self.r_texture_ref = statics.get_program_asset('t_missing.png')
+        
+        # If the texture exists, we're good to go!
+        else:
+            self.r_texture_ref = self.texture_ref
 
     # Cache texture
     def cache_texture(self):
-        texture_cache[self._id] = pygame.image.load(self.texture_ref).convert_alpha()
+        self.check_texture_ref()
+        texture_cache[self._id] = pygame.image.load(self.r_texture_ref).convert_alpha()
 
     # Retrieve texture from cache
     def get_texture(self):
@@ -93,11 +131,17 @@ def load_level(level_data):
             )
 
 def load_swatches_from_level(level_data):
+    global DEFAULT, swatches, swatch
+    
     # Load all swatches from the level into texture cache, they are for sure not going to have dupes as none exist at this stage
     # ! Load these swatches from LevelData first, and the ones from SwatchData second!
-    for swatch in level_data.swatches.values():
-        swatches.append(swatch)
-        swatch.cache_texture()
+    for level_swatch in level_data.swatches.values():
+        swatches.append(level_swatch)
+        level_swatch.cache_texture()
+
+    # Set global swatch info to match
+    DEFAULT = swatches[0]
+    swatch = DEFAULT
 
 def load_swatches_from_data(swatch_data):
     # Load swatches that do not exist in the level but exist in swatch data; that is, the ones that aren't dupes of the one found in level data
@@ -107,24 +151,11 @@ def load_swatches_from_data(swatch_data):
             swatches.append(swatch_data.swatches[key])
             swatch_data.swatches[key].cache_texture()
 
-    try_assign_default_swatch()
-
-def try_assign_default_swatch():
-    global DEFAULT, swatch
-    if len(swatches) > 0 and DEFAULT == None:
-        DEFAULT = swatch = swatches[0] # * Syntactic sugar for assigning same value to multiple variables!
-    if len(swatches) > 1:
-        swatch = swatches[1]
-
 def add_to_swatches(tile_details):
     # Make tiles from info in args
     for info in tile_details:
         swatches.append(TileInfo(info))
-    
-    # Assign required tiles if they do not exist
-    try_assign_default_swatch()
 
-    
 def highlight_hovered_tile():
     statics.VIEWPORT.blit(highlight_tile, (
             statics.n_round(statics.real_mouse_pos.x, statics.TILE_SIZE) * statics.zoom + statics.offset.x,
@@ -149,6 +180,17 @@ def generate_id():
             return generate_id()
     return prospect
 
+def initialize():
+    global DEFAULT, swatches, swatch
+
+    # Add a default swatch to the palette, we do this everytime we open the app
+    DEFAULT = TileInfo(('t_default.png'), is_program_asset=True)
+    swatches.append(DEFAULT)
+    swatch = DEFAULT
+
+    # Fill the level with the default tile
+    fill_level(DEFAULT)
+
 # Initialize texture cache
 texture_cache = {}
 
@@ -160,8 +202,7 @@ select_tile = pygame.Surface(statics.TILE_DIMENSIONS * statics.zoom, pygame.SRCA
 select_tile.fill(statics.SELECTED_COLOR)
 
 # Initialize swatches
-MISSING = None # Fallback tile for errors
-DEFAULT = None # What the eraser draws
+DEFAULT = None
 
 swatches = []
 swatch = None
