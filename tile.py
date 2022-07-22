@@ -167,10 +167,6 @@ def set_swatch(new_swatch: TileInfo):
     global swatch
     swatch = new_swatch
 
-def update_tiles():
-    for y in range(statics.CANVAS_SIZE[1]):
-        for x in range(statics.CANVAS_SIZE[0]):
-            statics.tiles[y][x].update(statics.VIEWPORT)
 
 def generate_id():
     # Generate a random unique tile ID
@@ -190,6 +186,16 @@ def initialize():
 
     # Fill the level with the default tile
     fill_level(DEFAULT)
+
+def update():
+    # Update tiles in canvas
+    for y in range(statics.CANVAS_SIZE[1]):
+        for x in range(statics.CANVAS_SIZE[0]):
+            statics.tiles[y][x].update(statics.VIEWPORT)
+
+    # Scale GUI tiles
+    pygame.transform.scale(highlight_tile, (statics.real_tile_size, statics.real_tile_size))
+    pygame.transform.scale(select_tile, (statics.real_tile_size, statics.real_tile_size))
 
 # Initialize texture cache
 texture_cache = {}

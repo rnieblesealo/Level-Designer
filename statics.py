@@ -2,6 +2,7 @@ import pygame
 import numpy
 
 # Program Constant Variables
+APP_NAME = 'Lyle'
 DISPLAY_SIZE = (1280, 720)
 VIEWPORT_SIZE = (900, 720)
 SIDEBAR_WIDTH = (DISPLAY_SIZE[0] - VIEWPORT_SIZE[0]) / 2
@@ -15,6 +16,7 @@ LEVEL_SIZE = (CANVAS_SIZE[0] * TILE_SIZE, CANVAS_SIZE[1] * TILE_SIZE)   # Pixel 
 SWATCH_LIMIT = 16                                                       # Limit to amount of tiles we can use to draw
 PROJECT_ASSETS_PATH = 'Project Assets/'                                 # Filepath where project assets are located
 PROGRAM_ASSETS_PATH = 'Program Assets/'                                 # Filepath where program assets are located
+OPEN_PROJECT_PATH = None                                                # Filepath of open project
 
 BACKGROUND_COLOR = (36, 42, 56)
 FOREGROUND_COLOR = (78, 89, 111)
@@ -76,3 +78,36 @@ def get_project_asset(file_name):
 
 def get_program_asset(file_name):
     return '{P}{N}'.format(P=PROGRAM_ASSETS_PATH, N=file_name)
+
+def initialize():
+    global DISPLAY, VIEWPORT, CLOCK, offset
+    
+    pygame.init()
+    pygame.display.set_caption(APP_NAME)
+
+    # Initialize backend components
+    DISPLAY = pygame.display.set_mode(DISPLAY_SIZE, pygame.DOUBLEBUF)
+    VIEWPORT = pygame.Surface(VIEWPORT_SIZE)
+    CLOCK = pygame.time.Clock()
+    
+    # Default offset such that level draw area is centered
+    offset = pygame.math.Vector2(
+        (VIEWPORT_SIZE[0] - LEVEL_SIZE[0] * zoom) / 2,
+        (VIEWPORT_SIZE[1] - LEVEL_SIZE[1] * zoom) / 2
+    )
+
+def update():
+    global delta_time, real_tile_size, real_mouse_pos
+    
+    # Update backend components
+    DISPLAY.fill(FOREGROUND_COLOR)
+    DISPLAY.blit(VIEWPORT, (SIDEBAR_WIDTH, 0))
+    VIEWPORT.fill(BACKGROUND_COLOR)
+    
+    # Update dynamic app static variables
+    delta_time = CLOCK.tick(60) / 1000
+    real_tile_size = TILE_SIZE * zoom
+    real_mouse_pos = pygame.math.Vector2(
+        (2 * pygame.mouse.get_pos()[0] - DISPLAY_SIZE[0] + VIEWPORT_SIZE[0] - 2 * offset.x) / (2 * zoom),
+        (2 * pygame.mouse.get_pos()[1] - DISPLAY_SIZE[1] + VIEWPORT_SIZE[1] - 2 * offset.y) / (2 * zoom), # * See notes for formula derivation
+    )

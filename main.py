@@ -9,27 +9,12 @@ import ui
 
 from pygame.math import Vector2
 
-pygame.init()
-pygame.display.set_caption("LevelPy")
-
-# Initialize backend components
-statics.DISPLAY = pygame.display.set_mode(statics.DISPLAY_SIZE, pygame.DOUBLEBUF)
-statics.VIEWPORT = pygame.Surface(statics.VIEWPORT_SIZE)
-statics.CLOCK = pygame.time.Clock()
-
 # Initialize app components
+statics.initialize()
 assets.initialize()
 tools.initialize()
 tile.initialize()
-
-# ! Load UI; must always be done AFTER level loading, as swatches must be loaded first to make swatch palette
-ui.load()
-
-# Default offset such that level draw area is centered
-statics.offset = Vector2(
-    (statics.VIEWPORT_SIZE[0] - statics.LEVEL_SIZE[0] * statics.zoom) / 2,
-    (statics.VIEWPORT_SIZE[1] - statics.LEVEL_SIZE[1] * statics.zoom) / 2
-)
+ui.initialize() # ! Must always be done AFTER level loading, as swatches must be loaded first to make swatch palette
 
 # MAIN LOOP
 while True:
@@ -44,27 +29,8 @@ while True:
     if pygame.key.get_pressed()[pygame.K_ESCAPE]:
         sys.exit()
 
-    # Update backend components
-    statics.DISPLAY.fill(statics.FOREGROUND_COLOR)
-    statics.DISPLAY.blit(statics.VIEWPORT, (statics.SIDEBAR_WIDTH, 0))
-    statics.VIEWPORT.fill(statics.BACKGROUND_COLOR)
-    
-    # Update dynamic app static variables
-    statics.delta_time = statics.CLOCK.tick(60) / 1000
-    statics.real_tile_size = statics.TILE_SIZE * statics.zoom
-    statics.real_mouse_pos = Vector2(
-        (2 * pygame.mouse.get_pos()[0] - statics.DISPLAY_SIZE[0] + statics.VIEWPORT_SIZE[0] - 2 * statics.offset.x) / (2 * statics.zoom),
-        (2 * pygame.mouse.get_pos()[1] - statics.DISPLAY_SIZE[1] + statics.VIEWPORT_SIZE[1] - 2 * statics.offset.y) / (2 * statics.zoom), # * See notes for formula derivation
-    )
-    
-    # Scale highlight tiles to match current tile scale
-    pygame.transform.scale(tile.highlight_tile, (statics.real_tile_size, statics.real_tile_size))
-    pygame.transform.scale(tile.select_tile, (statics.real_tile_size, statics.real_tile_size))
-
-    # Update tiles
-    tile.update_tiles()
-
-    # Update UI
+    statics.update()
+    tile.update()
     ui.update()
 
     # Panning
