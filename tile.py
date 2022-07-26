@@ -11,6 +11,25 @@ from pygame.math import Vector2
 
 # TODO When levels are loaded, ID conflicts between TileInfos may arise; amend this.
 
+# Variables
+
+# Initialize texture cache
+texture_cache = {}
+
+# Initialize surfaces of GUI tiles
+highlight_tile = pygame.Surface(statics.TILE_DIMENSIONS * statics.zoom, pygame.SRCALPHA)
+highlight_tile.fill(statics.HIGHLIGHT_COLOR)
+
+select_tile = pygame.Surface(statics.TILE_DIMENSIONS * statics.zoom, pygame.SRCALPHA)
+select_tile.fill(statics.SELECTED_COLOR)
+
+# Initialize swatches
+DEFAULT = None
+
+swatches = []
+swatch = None
+
+# Classes
 class TileInfo:
     texture_ref = None # ! COMPLETE path to texture, not just name!
     is_program_texture = False
@@ -110,7 +129,8 @@ class Tile:
         if self.selected:
             display.blit(select_tile, self.__level_position)
 
-def fill_level(fill_tile: TileInfo):
+# Methods
+def fill_level(fill_tile):
     # Init and fill entire canvas with a specific tile
     statics.tiles = numpy.empty((statics.CANVAS_SIZE[1], statics.CANVAS_SIZE[0]), dtype=Tile)
     for x in range(statics.CANVAS_SIZE[0]):
@@ -156,17 +176,16 @@ def add_to_swatches(tile_details):
     for info in tile_details:
         swatches.append(TileInfo(info))
 
+def set_swatch(new_swatch):
+    global swatch
+    swatch = new_swatch
+
 def highlight_hovered_tile():
     statics.VIEWPORT.blit(highlight_tile, (
             statics.n_round(statics.real_mouse_pos.x, statics.TILE_SIZE) * statics.zoom + statics.offset.x,
             statics.n_round(statics.real_mouse_pos.y, statics.TILE_SIZE) * statics.zoom + statics.offset.y
         )
     )
-
-def set_swatch(new_swatch: TileInfo):
-    global swatch
-    swatch = new_swatch
-
 
 def generate_id():
     # Generate a random unique tile ID
@@ -176,6 +195,7 @@ def generate_id():
             return generate_id()
     return prospect
 
+# Init & Update
 def initialize():
     global DEFAULT, swatches, swatch
 
@@ -196,19 +216,3 @@ def update():
     # Scale GUI tiles
     pygame.transform.scale(highlight_tile, (statics.real_tile_size, statics.real_tile_size))
     pygame.transform.scale(select_tile, (statics.real_tile_size, statics.real_tile_size))
-
-# Initialize texture cache
-texture_cache = {}
-
-# Initialize surfaces of GUI tiles
-highlight_tile = pygame.Surface(statics.TILE_DIMENSIONS * statics.zoom, pygame.SRCALPHA)
-highlight_tile.fill(statics.HIGHLIGHT_COLOR)
-
-select_tile = pygame.Surface(statics.TILE_DIMENSIONS * statics.zoom, pygame.SRCALPHA)
-select_tile.fill(statics.SELECTED_COLOR)
-
-# Initialize swatches
-DEFAULT = None
-
-swatches = []
-swatch = None

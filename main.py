@@ -67,4 +67,5 @@ while True:
     if statics.mouse_in_bounds():
         tile.highlight_hovered_tile()
 
-    pygame.display.update()
+    pygame.display.flip()
+    ui.late_update()

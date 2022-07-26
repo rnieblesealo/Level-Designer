@@ -8,10 +8,12 @@ import ui
 import assets
 import level_handler
 
+from tkinter import *
 from typing import Any, Callable
 from pygame import Surface, Rect, draw
 from pygame.math import Vector2
 
+# Classes
 class UIElement:
     position: Vector2
     dimensions: tuple
@@ -85,7 +87,6 @@ class Button(UIElement):
             self.__color = self.color
 
         # Draw background
-        print(self.__color)
         draw.rect(statics.DISPLAY, self.__color, self.rect)
         
         # Draw icon at center
@@ -229,32 +230,81 @@ class ToolPalette(ButtonPalette):
             button_i = ui.Button(Vector2(0, 0), button_size, statics.FOREGROUND_COLOR, items[i].icon, tools.set_tool, items[i])
             statics.place_at_first_empty(button_i, self.palette, None) # Add button of each element to palette
 
+# Variabless
 tool_palette = None
 tile_palette = None
 
+add_tile_button = None
 save_button = None
 load_button = None
 save_buttons = None
 
-def initialize():
-    global tool_palette, tile_palette, save_button, load_button, save_buttons
-    
-    # Initialize UI components
-    tool_palette = ui.ToolPalette(items = tools.toolbar, shape = (2, 2), button_size = (45, 45), position = Vector2(0, 0), dimensions = (statics.SIDEBAR_WIDTH, statics.DISPLAY_SIZE[1]), spacing = 30)
-    tile_palette = ui.TilePalette(items = tile.swatches, shape = (4, 3), button_size = (32, 32), position = statics.R_SIDEBAR_TOPLEFT, dimensions = (statics.SIDEBAR_WIDTH, statics.DISPLAY_SIZE[1]), spacing = 30)
-
-    save_button = ui.Button(Vector2(0, 0), (statics.SIDEBAR_WIDTH / 2, 45), statics.POSITIVE_COLOR, assets.ICON_save, level_handler.ProjectData.save_project, None)
-    load_button = ui.Button(Vector2(0, 0), (statics.SIDEBAR_WIDTH / 2, 45), statics.NEGATIVE_COLOR, assets.ICON_load, level_handler.ProjectData.load_project, None)
-    save_buttons = ui.HorizontalLayoutGroup([save_button, load_button], Vector2(0, statics.DISPLAY_SIZE[1] - 45), statics.SIDEBAR_WIDTH, 0)
-
+# Methods
 def reload():
     global tile_palette
     
     # Re-initialize project-dependent UI components
     tile_palette = ui.TilePalette(items = tile.swatches, shape = (4, 3), button_size = (32, 32), position = statics.R_SIDEBAR_TOPLEFT, dimensions = (statics.SIDEBAR_WIDTH, statics.DISPLAY_SIZE[1]), spacing = 30)
 
+# Init & Update
+def initialize():
+    global tool_palette, tile_palette, add_tile_button, save_button, load_button, save_buttons
+    
+    # Initialize UI components
+    tool_palette = ui.ToolPalette(items = tools.toolbar, shape = (2, 2), button_size = (45, 45), position = Vector2(0, 0), dimensions = (statics.SIDEBAR_WIDTH, statics.DISPLAY_SIZE[1]), spacing = 30)
+    tile_palette = ui.TilePalette(items = tile.swatches, shape = (4, 3), button_size = (32, 32), position = statics.R_SIDEBAR_TOPLEFT, dimensions = (statics.SIDEBAR_WIDTH, statics.DISPLAY_SIZE[1]), spacing = 30)
+
+    add_tile_button = ui.Button(Vector2(statics.R_SIDEBAR_TOPLEFT[0], statics.DISPLAY_SIZE[1] - 45), (statics.SIDEBAR_WIDTH, 45), statics.ADD_COLOR, assets.ICON_add, None, None)
+    save_button = ui.Button(Vector2(0, 0), (statics.SIDEBAR_WIDTH / 2, 45), statics.SAVE_COLOR, assets.ICON_save, level_handler.ProjectData.save_project, None)
+    load_button = ui.Button(Vector2(0, 0), (statics.SIDEBAR_WIDTH / 2, 45), statics.LOAD_COLOR, assets.ICON_load, level_handler.ProjectData.load_project, None)
+    save_buttons = ui.HorizontalLayoutGroup([save_button, load_button], Vector2(0, statics.DISPLAY_SIZE[1] - 45), statics.SIDEBAR_WIDTH, 0)
+
 def update():
     # Update UI componentss
     tool_palette.update()
     tile_palette.update()
     save_buttons.update()
+    add_tile_button.update()
+
+def late_update():
+    # Update external windows (TKinter)
+    pass
+
+# ! ---- TKINTER EXTERNAL WINDOW; THIS CODE IS EXPERIMENTAL! ---- !
+
+window = Tk()
+window.title('Create New Tile')
+window.minsize(400, 300)
+window.configure(bg='#4e596f')
+
+PADDING = 5
+HEX_FOREGROUND_COLOR = '#4e596f'
+HEX_BACKGROUND_COLOR = '#242a38'
+FONT = ('Helvetica', 10, 'bold')
+
+class TileInfoWidget:
+    info = None
+    row = None
+
+    i_texture: PhotoImage
+    
+    w_id: Label
+    w_icon: Button
+    w_tag: Label
+    w_tag_entry: Entry
+
+    def __init__(self, info, row) -> None:
+        self.info = info
+        self.row = row
+
+        self.i_texture = PhotoImage(file=info.texture_ref)
+
+        self.w_id = Label(window, text='ID: {ID}'.format(ID=info._id), background=HEX_BACKGROUND_COLOR, foreground='white', font=FONT)
+        self.w_icon = Button(window, background=HEX_FOREGROUND_COLOR, image=self.i_texture, width=20, height=20)
+        self.w_tag = Label(window, text='Tags:', background=HEX_FOREGROUND_COLOR, foreground='white', font=FONT)
+        self.w_tag_entry = Entry(window)
+
+        self.w_id.grid(row=self.row, column=0, sticky=W, padx=PADDING, pady=PADDING)
+        self.w_icon.grid(row=self.row, column=1, sticky=W, padx=PADDING, pady=PADDING)
+        self.w_tag.grid(row=self.row, column=2, sticky=W, padx=PADDING, pady=PADDING)
+        self.w_tag_entry.grid(row=self.row, column=3, sticky=W, padx=PADDING, pady=PADDING)

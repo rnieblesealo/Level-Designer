@@ -8,6 +8,7 @@ import ui
 
 from tkinter import filedialog
 
+# Variables --May include encapsulation classes
 class FileTypeInfo:
     type = None
     extension = None
@@ -30,6 +31,7 @@ ABORT_LOAD_ACTION_M = 'Aborting data load!'
 CANCELLED_ERROR_M = 'User canceled operation.'
 DNE_ERROR_M = 'Path does not exist or is invalid!'
 
+# Classes
 class SerializedData:
     file_type_info = None
     path = None

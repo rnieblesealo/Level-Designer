@@ -23,8 +23,9 @@ FOREGROUND_COLOR = (78, 89, 111)
 VIEWPORT_COLOR = (255, 255, 255)
 HIGHLIGHT_COLOR = (255, 255, 255, 100)
 SELECTED_COLOR = (255, 255, 0, 100)
-POSITIVE_COLOR = (39, 179, 118)
-NEGATIVE_COLOR = (191, 33, 47)
+SAVE_COLOR = (60, 174, 163)
+LOAD_COLOR = (237, 85, 59)
+ADD_COLOR = (255, 181, 61)
 
 DISPLAY = None
 VIEWPORT = None
@@ -79,6 +80,7 @@ def get_project_asset(file_name):
 def get_program_asset(file_name):
     return '{P}{N}'.format(P=PROGRAM_ASSETS_PATH, N=file_name)
 
+# Init & Update
 def initialize():
     global DISPLAY, VIEWPORT, CLOCK, offset
     

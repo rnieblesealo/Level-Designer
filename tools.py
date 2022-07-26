@@ -5,6 +5,7 @@ import pygame
 
 from pygame import Rect
 
+# Classes
 class Tool():
     icon = None
     is_selector = False
@@ -61,6 +62,7 @@ class Marquee(Tool):
 
         pygame.draw.rect(statics.VIEWPORT, (0, 0, 0), selection, 10, 10)
 
+# Methods
 def make_selection():
     for y in range(statics.CANVAS_SIZE[1]):
         for x in range(statics.CANVAS_SIZE[0]):
@@ -89,12 +91,14 @@ def set_tool(new_tool):
     statics.is_using = False # Clear previous tool state
     current = new_tool
 
+# Init
 def initialize():
     # Load all tool icons
     Pencil.icon = assets.ICON_pencil
     Eraser.icon = assets.ICON_eraser
     Marquee.icon = assets.ICON_marquee
 
+# Variables
 toolbar = [Pencil, Eraser, Marquee] # We use types rather than instances, as instances are not required
 current = Pencil
 
