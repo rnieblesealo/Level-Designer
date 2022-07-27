@@ -68,4 +68,3 @@ while True:
         tile.highlight_hovered_tile()
 
     pygame.display.flip()
-    ui.late_update()

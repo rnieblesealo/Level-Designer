@@ -1,5 +1,6 @@
 import pygame
 import numpy
+import tkinter
 import utils
 import statics
 import tools
@@ -82,12 +83,12 @@ class Button(UIElement):
                         self.__is_pressed = True
             else:
                 self.__is_pressed = False
-                self.__color = utils.lerp_rgb(self.__color, (self.color[0] * 0.75, self.color[1] * 0.75, self.color[2] * 0.75), 7.5 * statics.delta_time)
+                self.__color = (0, 0, 0)#utils.lerp_rgb(self.__color, (self.color[0] * 0.75, self.color[1] * 0.75, self.color[2] * 0.75), 7.5 * statics.delta_time)
         else:
             self.__color = self.color
 
         # Draw background
-        draw.rect(statics.DISPLAY, self.__color, self.rect)
+        draw.rect(statics.DISPLAY, (self.__color), self.rect)
         
         # Draw icon at center
         if self.icon != None:
@@ -234,10 +235,66 @@ class ToolPalette(ButtonPalette):
 tool_palette = None
 tile_palette = None
 
-add_tile_button = None
+edit_tile_button = None
 save_button = None
 load_button = None
 save_buttons = None
+
+# ! ---- TKINTER EXTERNAL WINDOW; THIS CODE IS EXPERIMENTAL! ---- !
+
+PADDING = 5
+HEX_FOREGROUND_COLOR = '#4e596f'
+HEX_BACKGROUND_COLOR = '#242a38'
+FONT = ('Helvetica', 10, 'bold')
+
+class TileEditor:
+    active_window = None
+    rows = None
+
+    def open():
+        # Create a new active window
+        TileEditor.active_window = Tk()
+        TileEditor.active_window.title('Tile Editor')
+        TileEditor.active_window.configure(bg='#4e596f')
+        
+        # Append tile information to window
+        rows = []
+        for i, t in enumerate(tile.swatches):
+            rows.append(TileInfoWidget(t, i, TileEditor.active_window))
+
+    def update():
+        if TileEditor.active_window:
+            TileEditor.active_window.mainloop()
+
+class TileInfoWidget:
+    info = None
+    row = None
+
+    i_texture = None
+    
+    w_id: Label
+    w_icon: Button
+    w_tag: Label
+    w_tag_entry: Entry
+
+    def __init__(self, info, row, window = TileEditor.active_window) -> None:
+        self.info = info
+        self.row = row
+
+        self.i_texture = PhotoImage(file=info.texture_ref)
+        self.w_id = Label(window, text='ID: {ID}'.format(ID=info._id), background=HEX_BACKGROUND_COLOR, foreground='white', font=FONT)
+        self.w_icon = tkinter.Button(window, image=self.i_texture, background=HEX_FOREGROUND_COLOR)
+        self.w_tag = Label(window, text='Tags:', background=HEX_FOREGROUND_COLOR, foreground='white', font=FONT)
+        self.w_tag_entry = Entry(window)
+        
+        self.w_icon.image = self.i_texture # ! Tkinter reference handling sucks, so we must assign this to prevent the image from getting destroyed.
+
+        self.w_icon.grid(row=self.row, column=0, sticky=W, padx=PADDING, pady=PADDING)
+        self.w_id.grid(row=self.row, column=1, sticky=W, padx=PADDING, pady=PADDING)
+        self.w_tag.grid(row=self.row, column=2, sticky=W, padx=PADDING, pady=PADDING)
+        self.w_tag_entry.grid(row=self.row, column=3, sticky=W, padx=PADDING, pady=PADDING)
+
+# ! ------------------------------------------------------------- !
 
 # Methods
 def reload():
@@ -248,13 +305,13 @@ def reload():
 
 # Init & Update
 def initialize():
-    global tool_palette, tile_palette, add_tile_button, save_button, load_button, save_buttons
+    global tool_palette, tile_palette, edit_tile_button, save_button, load_button, save_buttons
     
     # Initialize UI components
     tool_palette = ui.ToolPalette(items = tools.toolbar, shape = (2, 2), button_size = (45, 45), position = Vector2(0, 0), dimensions = (statics.SIDEBAR_WIDTH, statics.DISPLAY_SIZE[1]), spacing = 30)
     tile_palette = ui.TilePalette(items = tile.swatches, shape = (4, 3), button_size = (32, 32), position = statics.R_SIDEBAR_TOPLEFT, dimensions = (statics.SIDEBAR_WIDTH, statics.DISPLAY_SIZE[1]), spacing = 30)
 
-    add_tile_button = ui.Button(Vector2(statics.R_SIDEBAR_TOPLEFT[0], statics.DISPLAY_SIZE[1] - 45), (statics.SIDEBAR_WIDTH, 45), statics.ADD_COLOR, assets.ICON_add, None, None)
+    edit_tile_button = ui.Button(Vector2(statics.R_SIDEBAR_TOPLEFT[0], statics.DISPLAY_SIZE[1] - 45), (statics.SIDEBAR_WIDTH, 45), statics.ADD_COLOR, assets.ICON_add, TileEditor.open, None)
     save_button = ui.Button(Vector2(0, 0), (statics.SIDEBAR_WIDTH / 2, 45), statics.SAVE_COLOR, assets.ICON_save, level_handler.ProjectData.save_project, None)
     load_button = ui.Button(Vector2(0, 0), (statics.SIDEBAR_WIDTH / 2, 45), statics.LOAD_COLOR, assets.ICON_load, level_handler.ProjectData.load_project, None)
     save_buttons = ui.HorizontalLayoutGroup([save_button, load_button], Vector2(0, statics.DISPLAY_SIZE[1] - 45), statics.SIDEBAR_WIDTH, 0)
@@ -264,47 +321,7 @@ def update():
     tool_palette.update()
     tile_palette.update()
     save_buttons.update()
-    add_tile_button.update()
+    edit_tile_button.update()
 
-def late_update():
-    # Update external windows (TKinter)
-    pass
-
-# ! ---- TKINTER EXTERNAL WINDOW; THIS CODE IS EXPERIMENTAL! ---- !
-
-window = Tk()
-window.title('Create New Tile')
-window.minsize(400, 300)
-window.configure(bg='#4e596f')
-
-PADDING = 5
-HEX_FOREGROUND_COLOR = '#4e596f'
-HEX_BACKGROUND_COLOR = '#242a38'
-FONT = ('Helvetica', 10, 'bold')
-
-class TileInfoWidget:
-    info = None
-    row = None
-
-    i_texture: PhotoImage
-    
-    w_id: Label
-    w_icon: Button
-    w_tag: Label
-    w_tag_entry: Entry
-
-    def __init__(self, info, row) -> None:
-        self.info = info
-        self.row = row
-
-        self.i_texture = PhotoImage(file=info.texture_ref)
-
-        self.w_id = Label(window, text='ID: {ID}'.format(ID=info._id), background=HEX_BACKGROUND_COLOR, foreground='white', font=FONT)
-        self.w_icon = Button(window, background=HEX_FOREGROUND_COLOR, image=self.i_texture, width=20, height=20)
-        self.w_tag = Label(window, text='Tags:', background=HEX_FOREGROUND_COLOR, foreground='white', font=FONT)
-        self.w_tag_entry = Entry(window)
-
-        self.w_id.grid(row=self.row, column=0, sticky=W, padx=PADDING, pady=PADDING)
-        self.w_icon.grid(row=self.row, column=1, sticky=W, padx=PADDING, pady=PADDING)
-        self.w_tag.grid(row=self.row, column=2, sticky=W, padx=PADDING, pady=PADDING)
-        self.w_tag_entry.grid(row=self.row, column=3, sticky=W, padx=PADDING, pady=PADDING)
+    # Handle external active_window
+    TileEditor.update()

@@ -207,6 +207,9 @@ def initialize():
     # Fill the level with the default tile
     fill_level(DEFAULT)
 
+    # TODO REMOVE Add placeholder tiles for debugging
+    add_to_swatches(['dirt.png', 'grass.png', 'stone.png', 'water.png'])
+
 def update():
     # Update tiles in canvas
     for y in range(statics.CANVAS_SIZE[1]):
