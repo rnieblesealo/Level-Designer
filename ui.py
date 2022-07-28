@@ -8,8 +8,11 @@ import tile
 import ui
 import assets
 import level_handler
+import PIL.Image
+import PIL.ImageTk
 
 from tkinter import *
+from tkinter import filedialog
 from typing import Any, Callable
 from pygame import Surface, Rect, draw
 from pygame.math import Vector2
@@ -83,7 +86,7 @@ class Button(UIElement):
                         self.__is_pressed = True
             else:
                 self.__is_pressed = False
-                self.__color = (0, 0, 0)#utils.lerp_rgb(self.__color, (self.color[0] * 0.75, self.color[1] * 0.75, self.color[2] * 0.75), 7.5 * statics.delta_time)
+                self.__color = (0, 0, 0) # TODO (Fix failed interpolation) utils.lerp_rgb(self.__color, (self.color[0] * 0.75, self.color[1] * 0.75, self.color[2] * 0.75), 7.5 * statics.delta_time)
         else:
             self.__color = self.color
 
@@ -220,7 +223,7 @@ class TilePalette(ButtonPalette):
         super().make_palette(items, shape, button_size)
         
         for i in range(len(items)):
-            button_i = ui.Button(Vector2(0, 0), button_size, statics.FOREGROUND_COLOR, items[i].get_texture(), tile.set_swatch, items[i])
+            button_i = ui.Button(Vector2(0, 0), button_size, statics.FOREGROUND_COLOR, pygame.transform.scale(items[i].get_texture(), (16, 16)), tile.set_swatch, items[i])
             statics.place_at_first_empty(button_i, self.palette, None) # Add button of each element to palette
 
 class ToolPalette(ButtonPalette):
@@ -281,9 +284,9 @@ class TileInfoWidget:
         self.info = info
         self.row = row
 
-        self.i_texture = PhotoImage(file=info.texture_ref)
-        self.w_id = Label(window, text='ID: {ID}'.format(ID=info._id), background=HEX_BACKGROUND_COLOR, foreground='white', font=FONT)
-        self.w_icon = tkinter.Button(window, image=self.i_texture, background=HEX_FOREGROUND_COLOR)
+        self.i_texture = PIL.ImageTk.PhotoImage(file=info.texture_ref)
+        self.w_id = tkinter.Label(window, text='ID: {ID}'.format(ID=info._id), background=HEX_BACKGROUND_COLOR, foreground='white', font=FONT)
+        self.w_icon = tkinter.Button(window, image=self.i_texture, background=HEX_FOREGROUND_COLOR, command=self.w_icon_func)
         self.w_tag = Label(window, text='Tags:', background=HEX_FOREGROUND_COLOR, foreground='white', font=FONT)
         self.w_tag_entry = Entry(window)
         
@@ -293,6 +296,27 @@ class TileInfoWidget:
         self.w_id.grid(row=self.row, column=1, sticky=W, padx=PADDING, pady=PADDING)
         self.w_tag.grid(row=self.row, column=2, sticky=W, padx=PADDING, pady=PADDING)
         self.w_tag_entry.grid(row=self.row, column=3, sticky=W, padx=PADDING, pady=PADDING)
+
+    def w_icon_func(self, window = TileEditor.active_window):
+        # Get new texture
+        path = filedialog.askopenfilename(defaultextension='.jpg', filetypes=[('PNG Image', '.png')])
+        if path:
+            # Update texture
+            self.info.update_texture(path)
+
+            # Reload level textures
+            for y in range(statics.CANVAS_SIZE[1]):
+                for x in range(statics.CANVAS_SIZE[0]):
+                    statics.tiles[y][x].reload()
+
+            # Rebuild icon widget
+            self.i_texture = PIL.ImageTk.PhotoImage(PIL.Image.open(path).resize((16, 16), PIL.Image.ANTIALIAS))
+            self.w_icon = tkinter.Button(window, image=self.i_texture, background=HEX_FOREGROUND_COLOR, command=self.w_icon_func)
+            self.w_icon.image = self.i_texture # ! Tkinter reference handling sucks, so we must assign this to prevent the image from getting destroyed.
+            self.w_icon.grid(row=self.row, column=0, sticky=W, padx=PADDING, pady=PADDING)
+
+            # Reload UI for displayed palette to properly show
+            reload()
 
 # ! ------------------------------------------------------------- !
 

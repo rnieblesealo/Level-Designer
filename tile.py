@@ -3,8 +3,6 @@ import pygame
 import numpy
 import os
 
-import utils
-
 from random import randint
 from pygame import Rect
 from pygame.math import Vector2
@@ -45,6 +43,7 @@ class TileInfo:
         else:
             self.texture_ref = statics.get_project_asset(texture)
             
+        self.check_texture_ref()
         self.cache_texture()
 
     def check_texture_ref(self):
@@ -68,15 +67,23 @@ class TileInfo:
             # If nothing is found, assign a missing placeholder texture :( NOTE The original texture ref is still retained!
             if not found:
                 self.r_texture_ref = statics.get_program_asset('t_missing.png')
+                return False
         
         # If the texture exists, we're good to go!
         else:
             self.r_texture_ref = self.texture_ref
+            return True
 
     # Cache texture
     def cache_texture(self):
-        self.check_texture_ref()
         texture_cache[self._id] = pygame.image.load(self.r_texture_ref).convert_alpha()
+
+    # Update texture
+    def update_texture(self, new_texture_ref):
+        # Update and check this texture
+        self.texture_ref = new_texture_ref
+        self.check_texture_ref()
+        self.cache_texture()
 
     # Retrieve texture from cache
     def get_texture(self):
@@ -119,6 +126,10 @@ class Tile:
         # Scale texture accordingly
         self.__cached_texture = pygame.transform.scale(self.texture, (statics.real_tile_size, statics.real_tile_size))
 
+    def reload(self):
+        # Recheck TileInfo; match texture to the one contained in it
+        self.texture = self.info.get_texture()
+
     def update(self, display):
         self.reposition()
 
@@ -157,6 +168,7 @@ def load_swatches_from_level(level_data):
     # ! Load these swatches from LevelData first, and the ones from SwatchData second!
     for level_swatch in level_data.swatches.values():
         swatches.append(level_swatch)
+        level_swatch.check_texture_ref()
         level_swatch.cache_texture()
 
     # Set global swatch info to match
@@ -169,6 +181,7 @@ def load_swatches_from_data(swatch_data):
     for key in swatch_data.swatches.keys():
         if key not in texture_cache:
             swatches.append(swatch_data.swatches[key])
+            swatch_data.swatches[key].check_texture_ref()
             swatch_data.swatches[key].cache_texture()
 
 def add_to_swatches(tile_details):
