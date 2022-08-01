@@ -1,11 +1,12 @@
-import tile
-import statics
-import assets
-import pygame
-
 from pygame import Rect
 
-# Classes
+import assets
+import pygame
+import statics
+import tile
+
+from tile import TileCanvas
+
 class Tool():
     icon = None
     is_selector = False
@@ -17,23 +18,23 @@ class Pencil(Tool):
     is_selector = False
 
     def use():
-        if not statics.mouse_in_bounds():
+        if not TileCanvas.mouse_in_bounds():
             return
         
         # Replace selected tile w/one in argument
-        operand = statics.get_tile_at_mouse()
-        operand = tile.Tile(tile.swatch, operand.position)
+        operand = TileCanvas.get_tile_at_mouse()
+        operand = tile.Tile(TileCanvas.swatch, operand.position)
 
 class Eraser(Tool):
     is_selector = False
 
     def use():
-        if not statics.mouse_in_bounds():
+        if not TileCanvas.mouse_in_bounds():
             return
         
         # Replace selected tile w/default one set in tile.py
-        operand = statics.get_tile_at_mouse()
-        operand = tile.Tile(tile.DEFAULT, operand.position)
+        operand = TileCanvas.get_tile_at_mouse()
+        operand = tile.Tile(TileCanvas.DEFAULT, operand.position)
 
 class Marquee(Tool):
     is_selector = True
@@ -62,46 +63,42 @@ class Marquee(Tool):
 
         pygame.draw.rect(statics.VIEWPORT, (0, 0, 0), selection, 10, 10)
 
-# Methods
-def make_selection():
-    for y in range(statics.CANVAS_SIZE[1]):
-        for x in range(statics.CANVAS_SIZE[0]):
-            if statics.tiles[y][x].rect.colliderect(selection):
-                selection_buffer.append(statics.tiles[y][x])
-                statics.tiles[y][x].selected = True
+class Toolbox(Tool):
+    toolbar = [Pencil, Eraser, Marquee] # We use types rather than instances, as instances are not required
+    current = Pencil
 
-def clear_selection():
-    if len(selection_buffer) == 0:
-        return
-    for tile in selection_buffer:
-        tile.selected = False
-    selection_buffer.clear() 
-
-def delete_selection():
-    if len(selection_buffer) == 0:
-        return
-    for _tile in selection_buffer:
-        _tile = tile.Tile(tile.erased, _tile.position)
-
-def set_tool(new_tool):
-    global current
+    selection = Rect(0, 0, 0, 0)
+    selection_anchor = (0, 0)
+    selection_buffer = [] # Stores objects in current selection
     
-    clear_selection() # Clear previous selection when we switch tools!
-        
-    statics.is_using = False # Clear previous tool state
-    current = new_tool
+    def initialize():
+        # Load all tool icons
+        Pencil.icon = assets.ICON_pencil
+        Eraser.icon = assets.ICON_eraser
+        Marquee.icon = assets.ICON_marquee
+    
+    def make_selection():
+        for y in range(statics.LEVEL_SIZE[1]):
+            for x in range(statics.LEVEL_SIZE[0]):
+                if statics.tiles[y][x].rect.colliderect(selection):
+                    Toolbox.selection_buffer.append(statics.tiles[y][x])
+                    statics.tiles[y][x].selected = True
 
-# Init
-def initialize():
-    # Load all tool icons
-    Pencil.icon = assets.ICON_pencil
-    Eraser.icon = assets.ICON_eraser
-    Marquee.icon = assets.ICON_marquee
+    def clear_selection():
+        if len(Toolbox.selection_buffer) == 0:
+            return
+        for tile in Toolbox.selection_buffer:
+            tile.selected = False
+        Toolbox.selection_buffer.clear() 
 
-# Variables
-toolbar = [Pencil, Eraser, Marquee] # We use types rather than instances, as instances are not required
-current = Pencil
+    def delete_selection():
+        if len(Toolbox.selection_buffer) == 0:
+            return
+        for _tile in Toolbox.selection_buffer:
+            _tile = tile.Tile(TileCanvas.DEFAULT, _tile.position)
 
-selection = Rect(0, 0, 0, 0)
-selection_anchor = (0, 0)
-selection_buffer = [] # Stores objects in current selection
+    def set_tool(new_tool):        
+        Toolbox.clear_selection() # Clear previous selection when we switch tools!
+            
+        statics.is_using = False # Clear previous tool state
+        Toolbox.current = new_tool

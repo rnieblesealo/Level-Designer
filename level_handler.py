@@ -1,14 +1,13 @@
 import numpy
-import pickle
 import os
-
-import statics
-import tile
-import ui
+import pickle
 
 from tkinter import filedialog
 
-# Variables --May include encapsulation classes
+import statics
+
+from tile import TileCanvas
+
 class FileTypeInfo:
     type = None
     extension = None
@@ -20,19 +19,18 @@ class FileTypeInfo:
     def get_explorer_info(self):
         return [(self.type, self.extension)]
 
-FILE_TYPES = {
-    'level' : FileTypeInfo('Level File', '.lyvl'),
-    'swatch' : FileTypeInfo('Swatch Data', '.lysw'),
-    'project' : FileTypeInfo('Project', '.lyproj')
-}
-
-ABORT_SAVE_ACTION_M = 'Aborting data save!'
-ABORT_LOAD_ACTION_M = 'Aborting data load!'
-CANCELLED_ERROR_M = 'User canceled operation.'
-DNE_ERROR_M = 'Path does not exist or is invalid!'
-
-# Classes
 class SerializedData:
+    ABORT_SAVE_ACTION_M = 'Aborting data save!'
+    ABORT_LOAD_ACTION_M = 'Aborting data load!'
+    CANCELLED_ERROR_M = 'User canceled operation.'
+    DNE_ERROR_M = 'Path does not exist or is invalid!'
+    
+    FILE_TYPES = {
+        'level' : FileTypeInfo('Level File', '.lyvl'),
+        'swatch' : FileTypeInfo('Swatch Data', '.lysw'),
+        'project' : FileTypeInfo('Project', '.lyproj')
+    }
+
     file_type_info = None
     path = None
 
@@ -48,7 +46,7 @@ class SerializedData:
             
             print('Successfully saved {T} data! Path: {P}'.format(T=self.file_type_info.extension, P=self.path))
         else:
-            print(ABORT_SAVE_ACTION_M, CANCELLED_ERROR_M)
+            print(SerializedData.ABORT_SAVE_ACTION_M, SerializedData.CANCELLED_ERROR_M)
             return None
 
     def load(file_type_info):
@@ -65,14 +63,14 @@ class SerializedData:
                 print('Successfully loaded {T} data! Path: {P}'.format(T=file_type_info.extension, P=file.path))
                 return file
         else:
-            error_message = DNE_ERROR_M
+            error_message = SerializedData.DNE_ERROR_M
             if not path:
-                error_message = CANCELLED_ERROR_M
-            print(ABORT_LOAD_ACTION_M, error_message)
+                error_message = SerializedData.CANCELLED_ERROR_M
+            print(SerializedData.ABORT_LOAD_ACTION_M, error_message)
             return None
 
-class LevelData(SerializedData):    
-    file_type_info = FILE_TYPES['level']
+class LevelData(SerializedData):
+    file_type_info = SerializedData.FILE_TYPES['level']
     level = None
     swatches = None
 
@@ -96,7 +94,7 @@ class LevelData(SerializedData):
         print('\n')
 
 class SwatchData(SerializedData):
-    file_type_info = FILE_TYPES['swatch']
+    file_type_info = SerializedData.FILE_TYPES['swatch']
     swatches = None
 
     def __init__(self, swatch_palette) -> None:
@@ -113,7 +111,7 @@ class SwatchData(SerializedData):
         print('\n')
 
 class ProjectData(SerializedData):
-    file_type_info = FILE_TYPES['project']
+    file_type_info = SerializedData.FILE_TYPES['project']
     level_data = None
     swatch_data = None
 
@@ -128,7 +126,7 @@ class ProjectData(SerializedData):
         self.swatch_data.show()
 
     def save_project():
-        saved_project_data = ProjectData(statics.tiles, tile.swatches)
+        saved_project_data = ProjectData(statics.tiles, TileCanvas.swatches)
         saved_project_data.save()
         
         return saved_project_data
@@ -143,17 +141,14 @@ class ProjectData(SerializedData):
         statics.OPEN_PROJECT_PATH = loaded_project_data.path
 
         # We must clear these to avoid TileInfo ID conflicts
-        tile.swatches.clear()
-        tile.texture_cache.clear()
+        TileCanvas.swatches.clear()
+        TileCanvas.texture_cache.clear()
 
         # Load swatches included in the level first, then those associated to the project.
         # ! This order is necessary, as loading swatches from data automatically checks for duplicates and takes necessary steps.
-        tile.load_swatches_from_level(loaded_project_data.level_data)
-        tile.load_swatches_from_data(loaded_project_data.swatch_data)
-        tile.load_level(loaded_project_data.level_data)
+        TileCanvas.load_swatches_from_level(loaded_project_data.level_data)
+        TileCanvas.load_swatches_from_data(loaded_project_data.swatch_data)
+        TileCanvas.load_level(loaded_project_data.level_data)
 
         # Show final import project data to console
         loaded_project_data.show()
-
-        # Reload UI to show project-dependent info
-        ui.reload()

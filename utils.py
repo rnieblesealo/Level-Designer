@@ -1,8 +1,11 @@
+import numpy
 import pygame
 
 from pygame import Surface, Rect, transform, image
-from pygame.math import Vector2
 from pygame.font import Font
+from pygame.math import Vector2
+
+# * Imports done!
 
 def fit(dimensions = Vector2(0, 0), texture = None) -> Surface:
     """
@@ -117,3 +120,15 @@ def lerp_rgb(a = (0, 0, 0), b = (255, 255, 255), t = 0.5):
         int(a[1] + t * (b[1] - a[1])),
         int(a[2] + t * (b[2] - a[2]))
     )
+
+def n_round(x: float | int, n: int):
+    return numpy.floor(x / n) * n
+
+def place_at_first_empty(item, matrix, empty):
+    if len(matrix.shape) > 2:
+        return
+    for y in range(matrix.shape[0]):
+        for x in range(matrix.shape[1]):
+            if matrix[y][x] == empty:
+                matrix[y][x] = item
+                return
