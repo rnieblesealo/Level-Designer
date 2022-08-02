@@ -20,7 +20,7 @@ TILE_SIZE = pygame.math.Vector2(16, 16)                                         
 LEVEL_SIZE = (20, 10)                                                           # Canvas size where (x, y) represent amount of tiles for each axis
 LEVEL_SIZE_PX = (LEVEL_SIZE[0] * TILE_SIZE[0], LEVEL_SIZE[1] * TILE_SIZE[1])    # Pixel size of entire level
 
-SWATCH_LIMIT = 16                                                               # Limit to amount of tiles we can use to draw
+SWATCH_LIMIT = 18                                                               # Limit to amount of tiles we can use to draw
 
 PROJECT_ASSETS_PATH = 'Project Assets/'                                         # Filepath where project assets are located
 PROGRAM_ASSETS_PATH = 'Program Assets/'                                         # Filepath where program assets are located
@@ -33,7 +33,7 @@ HIGHLIGHT_COLOR = (255, 255, 255, 100)
 SELECTED_COLOR = (255, 255, 0, 100)
 SAVE_COLOR = (60, 174, 163)
 LOAD_COLOR = (237, 85, 59)
-ADD_COLOR = (255, 181, 61)
+EDIT_COLOR = (255, 181, 61)
 
 delta_time = 0
 tiles = None

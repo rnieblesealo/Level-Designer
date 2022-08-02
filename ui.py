@@ -243,24 +243,61 @@ class ToolPalette(ButtonPalette):
             utils.place_at_first_empty(button_i, self.palette, None) # Add button of each element to palette
 
 class TileEditor:
+    # TODO Use hex to rgb converter to process this!
     PADDING = 5
-    HEX_FOREGROUND_COLOR = '#4e596f'
-    HEX_BACKGROUND_COLOR = '#242a38'
+    FOREGROUND_COLOR = '#4e596f'
+    BACKGROUND_COLOR = '#242a38'
+    MINUS_COLOR = '#ed553b'
+    PLUS_COLOR = '#3caea3'
     FONT = ('Helvetica', 10, 'bold')
     
     active_window = None
     rows = None
+    
+    delete_image = None
+    add_image = None
+    
+    add_button = None
 
     def open():
         # Create a new active window
         TileEditor.active_window = Tk()
         TileEditor.active_window.title('Tile Editor')
-        TileEditor.active_window.configure(bg=TileEditor.HEX_FOREGROUND_COLOR)
+        TileEditor.active_window.configure(bg=TileEditor.FOREGROUND_COLOR)
+        TileEditor.active_window.protocol('WM_DELETE_WINDOW', TileEditor.on_close)
         
+        # Initialize window-dependent variables
+        TileEditor.delete_image = PIL.ImageTk.PhotoImage(PIL.Image.open(assets.get_program_asset('minus.png')).resize((16, 16), PIL.Image.NEAREST))
+        TileEditor.add_image = PIL.ImageTk.PhotoImage(PIL.Image.open(assets.get_program_asset('plus.png')).resize((16, 16), PIL.Image.NEAREST))
+
         # Append tile information to window
-        rows = []
+        TileEditor.rows = []
         for i, t in enumerate(TileCanvas.swatches):
-            rows.append(TileInfoWidget(t, i, TileEditor.active_window))
+            TileEditor.rows.append(TileInfoWidget(t, i, TileEditor.active_window))
+        
+        # Make add tile button
+        TileEditor.add_button = tkinter.Button(TileEditor.active_window, image=TileEditor.add_image, background=TileEditor.PLUS_COLOR, command=TileEditor.create_tile)
+        TileEditor.add_button.image = TileEditor.add_image
+        TileEditor.add_button.grid(row=len(TileEditor.rows) + 1, column=0, sticky=W, padx=TileEditor.PADDING, pady=TileEditor.PADDING)
+
+    def on_close():
+        # Reload GUI to show changes to swatches
+        GUI.reload()
+
+        # Destroy window
+        TileEditor.active_window.destroy()
+
+    def create_tile():
+        if len(TileCanvas.swatches) == statics.SWATCH_LIMIT:
+            print("Cannot add tile: swatch limit reached!")
+            return
+        
+        # Add new tile
+        TileCanvas.add_to_swatches(['sky.png'])
+        TileEditor.rows.append(TileInfoWidget(TileCanvas.swatches[len(TileCanvas.swatches) - 1], len(TileEditor.rows) + 1))
+
+        # Reposition add button
+        TileEditor.add_button.grid(row=len(TileEditor.rows) + 1, column=0, sticky=W, padx=TileEditor.PADDING, pady=TileEditor.PADDING)
 
     def update():
         if TileEditor.active_window:
@@ -270,31 +307,35 @@ class TileInfoWidget:
     info = None
     row = None
 
-    i_texture = None
+    texture_image = None
     
-    w_id: Label
-    w_icon: Button
-    w_tag: Label
-    w_tag_entry: Entry
+    delete_button: Button
+    icon_button: Button
+    id_label: Label
+    tag_label: Label
+    tag_entry: Entry
 
     def __init__(self, info, row, window = TileEditor.active_window) -> None:
         self.info = info
         self.row = row
 
-        self.i_texture = PIL.ImageTk.PhotoImage(file=info.texture_ref)
-        self.w_id = tkinter.Label(window, text='ID: {ID}'.format(ID=info._id), background=TileEditor.HEX_BACKGROUND_COLOR, foreground='white', font=TileEditor.FONT)
-        self.w_icon = tkinter.Button(window, image=self.i_texture, background=TileEditor.HEX_FOREGROUND_COLOR, command=self.w_icon_func)
-        self.w_tag = Label(window, text='Tags:', background=TileEditor.HEX_FOREGROUND_COLOR, foreground='white', font=TileEditor.FONT)
-        self.w_tag_entry = Entry(window)
+        self.texture_image = PIL.ImageTk.PhotoImage(PIL.Image.open(info.texture_ref).resize((16, 16), PIL.Image.NEAREST))
         
-        self.w_icon.image = self.i_texture # ! Tkinter reference handling sucks, so we must assign this to prevent the image from getting destroyed.
+        self.delete_button = tkinter.Button(window, image=TileEditor.delete_image, background=TileEditor.MINUS_COLOR)
+        self.icon_button = tkinter.Button(window, image=self.texture_image, background=TileEditor.FOREGROUND_COLOR, command=self.prompt_icon_replacement)
+        self.id_label = tkinter.Label(window, text='ID: {ID}'.format(ID=info._id), background=TileEditor.BACKGROUND_COLOR, foreground='white', font=TileEditor.FONT)
+        self.tag_label = Label(window, text='Tags:', background=TileEditor.FOREGROUND_COLOR, foreground='white', font=TileEditor.FONT)
+        self.tag_entry = Entry(window)
+        
+        self.icon_button.image = self.texture_image # ! Tkinter reference handling sucks, so we must assign this to prevent the image from getting destroyed.
 
-        self.w_icon.grid(row=self.row, column=0, sticky=W, padx=TileEditor.PADDING, pady=TileEditor.PADDING)
-        self.w_id.grid(row=self.row, column=1, sticky=W, padx=TileEditor.PADDING, pady=TileEditor.PADDING)
-        self.w_tag.grid(row=self.row, column=2, sticky=W, padx=TileEditor.PADDING, pady=TileEditor.PADDING)
-        self.w_tag_entry.grid(row=self.row, column=3, sticky=W, padx=TileEditor.PADDING, pady=TileEditor.PADDING)
+        self.delete_button.grid(row=self.row, column=0, sticky=W, padx=TileEditor.PADDING, pady=TileEditor.PADDING)
+        self.icon_button.grid(row=self.row, column=1, sticky=W, padx=TileEditor.PADDING, pady=TileEditor.PADDING)
+        self.id_label.grid(row=self.row, column=2, sticky=W, padx=TileEditor.PADDING, pady=TileEditor.PADDING)
+        self.tag_label.grid(row=self.row, column=3, sticky=W, padx=TileEditor.PADDING, pady=TileEditor.PADDING)
+        self.tag_entry.grid(row=self.row, column=4, sticky=W, padx=TileEditor.PADDING, pady=TileEditor.PADDING)
 
-    def w_icon_func(self, window = TileEditor.active_window):
+    def prompt_icon_replacement(self, window = TileEditor.active_window):
         # Get new texture
         path = filedialog.askopenfilename(defaultextension='.jpg', filetypes=[('PNG Image', '.png')])
         if path:
@@ -307,10 +348,10 @@ class TileInfoWidget:
                     statics.tiles[y][x].reload()
 
             # Rebuild icon widget
-            self.i_texture = PIL.ImageTk.PhotoImage(PIL.Image.open(path).resize((16, 16), PIL.Image.ANTIALIAS))
-            self.w_icon = tkinter.Button(window, image=self.i_texture, background=TileEditor.HEX_FOREGROUND_COLOR, command=self.w_icon_func)
-            self.w_icon.image = self.i_texture # ! Tkinter reference handling sucks, so we must assign this to prevent the image from getting destroyed.
-            self.w_icon.grid(row=self.row, column=0, sticky=W, padx=TileEditor.PADDING, pady=TileEditor.PADDING)
+            self.texture_image = PIL.ImageTk.PhotoImage(PIL.Image.open(path).resize((16, 16), PIL.Image.NEAREST))
+            self.icon_button = tkinter.Button(window, image=self.texture_image, background=TileEditor.FOREGROUND_COLOR, command=self.prompt_icon_replacement)
+            self.icon_button.image = self.texture_image # ! Tkinter reference handling sucks, so we must assign this to prevent the image from getting destroyed.
+            self.icon_button.grid(row=self.row, column=0, sticky=W, padx=TileEditor.PADDING, pady=TileEditor.PADDING)
 
             # Reload UI for displayed palette to properly show
             GUI.reload()
@@ -327,15 +368,15 @@ class GUI:
 
     def reload():        
         # Re-initialize project-dependent UI components
-        GUI.tile_palette = ui.TilePalette(items = TileCanvas.swatches, shape = (4, 3), button_size = (32, 32), position = statics.R_SIDEBAR_TOPLEFT, dimensions = (statics.SIDEBAR_WIDTH, statics.DISPLAY_SIZE[1]), spacing = 30)
+        GUI.tile_palette = ui.TilePalette(items = TileCanvas.swatches, shape = (numpy.ceil(statics.SWATCH_LIMIT / 3).astype(int), 3), button_size = (32, 32), position = statics.R_SIDEBAR_TOPLEFT, dimensions = (statics.SIDEBAR_WIDTH, statics.DISPLAY_SIZE[1]), spacing = 30)
 
     # Init & Update
     def initialize():        
         # Initialize UI components
         GUI.tool_palette = ui.ToolPalette(items = Toolbox.toolbar, shape = (2, 2), button_size = (45, 45), position = Vector2(0, 0), dimensions = (statics.SIDEBAR_WIDTH, statics.DISPLAY_SIZE[1]), spacing = 30)
-        GUI.tile_palette = ui.TilePalette(items = TileCanvas.swatches, shape = (4, 3), button_size = (32, 32), position = statics.R_SIDEBAR_TOPLEFT, dimensions = (statics.SIDEBAR_WIDTH, statics.DISPLAY_SIZE[1]), spacing = 30)
+        GUI.tile_palette = ui.TilePalette(items = TileCanvas.swatches, shape = (numpy.ceil(statics.SWATCH_LIMIT / 3).astype(int), 3), button_size = (32, 32), position = statics.R_SIDEBAR_TOPLEFT, dimensions = (statics.SIDEBAR_WIDTH, statics.DISPLAY_SIZE[1]), spacing = 30)
 
-        GUI.edit_tile_button = ui.Button(Vector2(statics.R_SIDEBAR_TOPLEFT[0], statics.DISPLAY_SIZE[1] - 45), (statics.SIDEBAR_WIDTH, 45), statics.ADD_COLOR, assets.ICON_add, TileEditor.open, None)
+        GUI.edit_tile_button = ui.Button(Vector2(statics.R_SIDEBAR_TOPLEFT[0], statics.DISPLAY_SIZE[1] - 45), (statics.SIDEBAR_WIDTH, 45), statics.EDIT_COLOR, assets.ICON_edit, TileEditor.open, None)
         GUI.save_button = ui.Button(Vector2(0, 0), (statics.SIDEBAR_WIDTH / 2, 45), statics.SAVE_COLOR, assets.ICON_save, level_handler.ProjectData.save_project, None)
         GUI.load_button = ui.Button(Vector2(0, 0), (statics.SIDEBAR_WIDTH / 2, 45), statics.LOAD_COLOR, assets.ICON_load, (level_handler.ProjectData.load_project, GUI.reload), (None, None))
         GUI.save_buttons = ui.HorizontalLayoutGroup([GUI.save_button, GUI.load_button], Vector2(0, statics.DISPLAY_SIZE[1] - 45), statics.SIDEBAR_WIDTH, 0)

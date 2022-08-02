@@ -83,6 +83,7 @@ class TileCanvas:
         for key in swatch_data.swatches.keys():
             if key not in TileCanvas.texture_cache:
                 TileCanvas.swatches.append(swatch_data.swatches[key])
+                #print(os.path.exists(swatch_data.swatches[key].texture_ref))
                 swatch_data.swatches[key].check_texture_ref()
                 swatch_data.swatches[key].cache_texture()
 
@@ -144,27 +145,25 @@ class TileInfo:
         self.cache_texture()
 
     def check_texture_ref(self):
-        # If texture ref is not found, try to search for one in project assets
+        # If texture ref is not found, try to search for one in designated assets folder
         if not os.path.exists(self.texture_ref):
             # First, get the raw name of the file by splitting at every / and grabbing the last substring, which should be the file name
             substrings = self.texture_ref.split('/')
             key = substrings[len(substrings) - 1]
             
-            print(key)
-
             # Search every filename in respective assets folder for that key; if it is found, make a new texture ref with it
             directory = statics.PROGRAM_ASSETS_PATH if self.is_program_texture else statics.PROJECT_ASSETS_PATH
             found = False
             for path in os.listdir(directory):
-                if path.find(key):
+                if path.find(key) > -1: # path.find() returns -1 on failure; this is what we should use to perform checks.
                     self.texture_ref = assets.get_project_asset(key)
                     self.r_texture_ref = assets.get_project_asset(key)
                     found = True
+                    break
             
             # If nothing is found, assign a missing placeholder texture :( NOTE The original texture ref is still retained!
             if not found:
                 self.r_texture_ref = assets.get_program_asset('t_missing.png')
-                return False
         
         # If the texture exists, we're good to go!
         else:
