@@ -90,11 +90,11 @@ class Button(UIElement):
                                 self.functions[i](self.arguments[i])
                             else:
                                 self.functions[i]() 
-                        self.__color = utils.lerp_rgb(self.__color, (self.color[0] * 0.25, self.color[1] * 0.25, self.color[2] * 0.25), 7.5 * statics.delta_time)
+                        self.__color = (int(self.color[0] * 0.25), int(self.color[1] * 0.25), int(self.color[2] * 0.25))
                         self.__is_pressed = True
             else:
                 self.__is_pressed = False
-                self.__color = (0, 0, 0) # TODO (Fix failed interpolation) utils.lerp_rgb(self.__color, (self.color[0] * 0.75, self.color[1] * 0.75, self.color[2] * 0.75), 7.5 * statics.delta_time)
+                self.__color = (int(self.color[0] * 0.75), int(self.color[1] * 0.75), int(self.color[2] * 0.75))
         else:
             self.__color = self.color
 

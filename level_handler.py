@@ -81,16 +81,16 @@ class LevelData(SerializedData):
         # Make level and swatches
         for y in range(tile_array.shape[0]):
             for x in range(tile_array.shape[1]):
-                self.level[y][x] = tile_array[y][x].info._id # Construct level as 2D int array, where ints are to represent tile's ID
+                self.level[y][x] = tile_array[y][x].info.id # Construct level as 2D int array, where ints are to represent tile's ID
                 
-                if tile_array[y][x].info._id not in self.swatches:
-                    self.swatches[tile_array[y][x].info._id] = tile_array[y][x].info # Save TileInfo of tiles included in level in swatches dict
+                if tile_array[y][x].info.id not in self.swatches:
+                    self.swatches[tile_array[y][x].info.id] = tile_array[y][x].info # Save TileInfo of tiles included in level in swatches dict
 
     def show(self):
         print('\n--Level Array--\n\n', self.level, '\n')
         print('\n--Level Tiles--\n\n')
         for tile in self.swatches.values():
-            print('ID: {ID}, Texture Filename: {T}'.format(ID=tile._id, T=tile.texture_ref))
+            print('ID: {ID}, Texture Filename: {T}'.format(ID=tile.id, T=tile.texture_ref))
         print('\n')
 
 class SwatchData(SerializedData):
@@ -101,13 +101,13 @@ class SwatchData(SerializedData):
         # Store TileInfo in swatch palette, with each referenced by their ID in a dict
         self.swatches = {}
         for i in range(len(swatch_palette)):
-            self.swatches[swatch_palette[i]._id] = swatch_palette[i]
+            self.swatches[swatch_palette[i].id] = swatch_palette[i]
     
     def show(self):
         print('\n --Swatch Data--\n')
         for swatch in self.swatches.values():
-            status = '(FOUND)' if swatch.texture_ref == swatch.r_texture_ref else '(MISSING)'
-            print('ID: {ID}, Texture Filename: {T} {S}'.format(ID=swatch._id, T=swatch.texture_ref, S=status))
+            status = '(FOUND)' if swatch.texture_ref == swatch.active_texture_ref else '(MISSING)'
+            print('ID: {ID}, Texture Filename: {T} {S}'.format(ID=swatch.id, T=swatch.texture_ref, S=status))
         print('\n')
 
 class ProjectData(SerializedData):
