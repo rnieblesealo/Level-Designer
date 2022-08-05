@@ -106,7 +106,7 @@ class TileCanvas:
         # Generate a random unique tile ID
         prospect = randint(0, statics.SWATCH_LIMIT)
         for swatch in TileCanvas.swatches:
-            if swatch._id == prospect:
+            if swatch.id == prospect:
                 return TileCanvas.generate_id()
         return prospect
 
@@ -127,13 +127,15 @@ class TileCanvas:
         return statics.tiles[int(nearest_pos.y / statics.TILE_SIZE.x)][int(nearest_pos.x / statics.TILE_SIZE.y)]
 
 class TileInfo:
-    texture_ref = None # ! COMPLETE path to texture, not just name!
-    is_program_texture = False
-    r_texture_ref = None # ! Active texture reference; may differ from main texture ref in cases where main is missing
-    _id = 0
+    is_program_texture = False      # Will the tile's texture be found in the program assets?
+    deleted = False                 # Has this tile been removed from the TileEditor?
+
+    texture_ref = None              # COMPLETE path to texture, not just name!
+    active_texture_ref = None       # Active texture reference; may differ from main texture ref in cases where main is missing
+    id = 0                          # Unique identifier for this tile
 
     def __init__(self, texture = None, is_program_asset = False) -> None:
-        self._id = TileCanvas.generate_id() # Generate a random ID for this new tile
+        self.id = TileCanvas.generate_id() # Generate a random ID for this new tile
         self.is_program_texture = is_program_asset
     
         if self.is_program_texture:
@@ -157,22 +159,27 @@ class TileInfo:
             for path in os.listdir(directory):
                 if path.find(key) > -1: # path.find() returns -1 on failure; this is what we should use to perform checks.
                     self.texture_ref = assets.get_project_asset(key)
-                    self.r_texture_ref = assets.get_project_asset(key)
+                    self.active_texture_ref = assets.get_project_asset(key)
                     found = True
                     break
             
             # If nothing is found, assign a missing placeholder texture :( NOTE The original texture ref is still retained!
             if not found:
-                self.r_texture_ref = assets.get_program_asset('t_missing.png')
+                self.active_texture_ref = assets.get_program_asset('t_missing.png')
         
         # If the texture exists, we're good to go!
         else:
-            self.r_texture_ref = self.texture_ref
+            self.active_texture_ref = self.texture_ref
             return True
 
     # Cache texture
     def cache_texture(self):
-        TileCanvas.texture_cache[self._id] = pygame.image.load(self.r_texture_ref).convert_alpha()
+        TileCanvas.texture_cache[self.id] = pygame.image.load(self.active_texture_ref).convert_alpha()
+
+    # Decache texture
+    def uncache_texture(self):
+        TileCanvas.texture_cache.pop(self.id)
+        self.deleted = True # If the texture was uncached, the TileInfo has to have been deleted.
 
     # Update texture
     def update_texture(self, new_texture_ref):
@@ -183,7 +190,7 @@ class TileInfo:
 
     # Retrieve texture from cache
     def get_texture(self):
-        return TileCanvas.texture_cache[self._id]
+        return TileCanvas.texture_cache[self.id]
 
 class Tile:
     info = None

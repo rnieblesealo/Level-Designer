@@ -1,6 +1,4 @@
-import numpy
 import pygame
-import utils
 
 APP_NAME = 'Lyle'
 

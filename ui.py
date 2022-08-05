@@ -289,12 +289,29 @@ class TileEditor:
 
     def create_tile():
         if len(TileCanvas.swatches) == statics.SWATCH_LIMIT:
-            print("Cannot add tile: swatch limit reached!")
+            print("Cannot add swatch: swatch limit reached!")
             return
         
-        # Add new tile
+        # Add new swatch
         TileCanvas.add_to_swatches(['sky.png'])
         TileEditor.rows.append(TileInfoWidget(TileCanvas.swatches[len(TileCanvas.swatches) - 1], len(TileEditor.rows) + 1))
+
+        # Reposition add button
+        TileEditor.add_button.grid(row=len(TileEditor.rows) + 1, column=0, sticky=W, padx=TileEditor.PADDING, pady=TileEditor.PADDING)
+
+    def delete_tile(index):
+        if len(TileCanvas.swatches) == 1:
+            print("Cannot remove swatch: At least 1 swatch is required!")
+            return
+
+        # Decache swatch texture, pop texture from swatches, destroy UI element
+        TileCanvas.swatches[index].uncache_texture()
+        TileCanvas.swatches.pop(index)
+        TileEditor.rows.pop(index).delete()
+
+        # If the selected swatch was the deleted tile, make the last swatch in the list the new active one
+        if TileCanvas.swatch.deleted:
+            TileCanvas.swatch = TileCanvas.swatches[len(TileCanvas.swatches) - 1]
 
         # Reposition add button
         TileEditor.add_button.grid(row=len(TileEditor.rows) + 1, column=0, sticky=W, padx=TileEditor.PADDING, pady=TileEditor.PADDING)
@@ -309,8 +326,8 @@ class TileInfoWidget:
 
     texture_image = None
     
-    delete_button: Button
-    icon_button: Button
+    delete_button: tkinter.Button
+    icon_button: tkinter.Button
     id_label: Label
     tag_label: Label
     tag_entry: Entry
@@ -321,9 +338,9 @@ class TileInfoWidget:
 
         self.texture_image = PIL.ImageTk.PhotoImage(PIL.Image.open(info.texture_ref).resize((16, 16), PIL.Image.NEAREST))
         
-        self.delete_button = tkinter.Button(window, image=TileEditor.delete_image, background=TileEditor.MINUS_COLOR)
+        self.delete_button = tkinter.Button(window, image=TileEditor.delete_image, background=TileEditor.MINUS_COLOR, command=lambda:TileEditor.delete_tile(row))
         self.icon_button = tkinter.Button(window, image=self.texture_image, background=TileEditor.FOREGROUND_COLOR, command=self.prompt_icon_replacement)
-        self.id_label = tkinter.Label(window, text='ID: {ID}'.format(ID=info._id), background=TileEditor.BACKGROUND_COLOR, foreground='white', font=TileEditor.FONT)
+        self.id_label = tkinter.Label(window, text='ID: {ID}'.format(ID=info.id), background=TileEditor.BACKGROUND_COLOR, foreground='white', font=TileEditor.FONT)
         self.tag_label = Label(window, text='Tags:', background=TileEditor.FOREGROUND_COLOR, foreground='white', font=TileEditor.FONT)
         self.tag_entry = Entry(window)
         
@@ -334,6 +351,14 @@ class TileInfoWidget:
         self.id_label.grid(row=self.row, column=2, sticky=W, padx=TileEditor.PADDING, pady=TileEditor.PADDING)
         self.tag_label.grid(row=self.row, column=3, sticky=W, padx=TileEditor.PADDING, pady=TileEditor.PADDING)
         self.tag_entry.grid(row=self.row, column=4, sticky=W, padx=TileEditor.PADDING, pady=TileEditor.PADDING)
+
+    def delete(self):        
+        # Destroy all widgets
+        self.delete_button.destroy()
+        self.icon_button.destroy()
+        self.id_label.destroy()
+        self.tag_label.destroy()
+        self.tag_entry.destroy()
 
     def prompt_icon_replacement(self, window = TileEditor.active_window):
         # Get new texture
