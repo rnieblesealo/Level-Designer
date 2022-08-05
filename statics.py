@@ -1,4 +1,5 @@
 import pygame
+import utils
 
 APP_NAME = 'Lyle'
 
@@ -50,12 +51,14 @@ def initialize():
     global DISPLAY, VIEWPORT, CLOCK, offset
     
     pygame.init()
-    pygame.display.set_caption(APP_NAME)
 
     # Initialize backend components
     DISPLAY = pygame.display.set_mode(DISPLAY_SIZE, pygame.DOUBLEBUF)
     VIEWPORT = pygame.Surface(VIEWPORT_SIZE)
     CLOCK = pygame.time.Clock()
+    
+    pygame.display.set_caption(APP_NAME)
+    pygame.display.set_icon(utils.load_image(PROGRAM_ASSETS_PATH + 'logo.png'))
     
     # Default offset such that level draw area is centered
     offset = pygame.math.Vector2(
