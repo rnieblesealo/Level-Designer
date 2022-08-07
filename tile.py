@@ -65,6 +65,14 @@ class TileCanvas:
                     Vector2(x, y).elementwise() * statics.TILE_SIZE
                 )
 
+    def fill_deleted():
+        # Substitute info of all deleted tiles for default tile
+        for x in range(statics.LEVEL_SIZE[0]):
+            for y in range(statics.LEVEL_SIZE[1]):
+                if statics.tiles[y][x].info.deleted:
+                    statics.tiles[y][x].info = TileCanvas.DEFAULT
+                    statics.tiles[y][x].reload()
+
     def load_swatches_from_level(level_data):
         # Load all swatches from the level into texture cache, they are for sure not going to have dupes as none exist at this stage
         # ! Load these swatches from LevelData first, and the ones from SwatchData second!
@@ -145,6 +153,10 @@ class TileInfo:
             
         self.check_texture_ref()
         self.cache_texture()
+
+    def __del__(self):
+        # Log destruction of this TileInfo
+        print('Cleared TileInfo w/texture ref {R} from memory.'.format(R=self.texture_ref))
 
     def check_texture_ref(self):
         # If texture ref is not found, try to search for one in designated assets folder

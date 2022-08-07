@@ -18,6 +18,9 @@ import level_handler
 from tile import TileCanvas
 from tools import Toolbox
 
+#TEMP
+import gc
+
 class UIElement:
     position: Vector2
     dimensions: tuple
@@ -331,14 +334,18 @@ class TileEditor:
         # Decache swatch texture, pop texture from swatches, destroy UI element
         TileCanvas.swatches[index].uncache_texture()
         TileCanvas.swatches.pop(index)
+        TileCanvas.fill_deleted()
         TileEditor.rows.pop(index).delete()
 
-        # If the selected swatch was the deleted tile, make the last swatch in the list the new active one
+        # If the selected swatch was the deleted tile, set the first swatch active
         if TileCanvas.swatch.deleted:
-            TileCanvas.swatch = TileCanvas.swatches[len(TileCanvas.swatches) - 1]
+            TileCanvas.swatch = TileCanvas.swatches[0]
 
         # Reposition add button
         TileEditor.add_button.grid(row=len(TileEditor.rows) + 1, column=0, sticky=W, padx=TileEditor.PADDING, pady=TileEditor.PADDING)
+
+        # Collect garbage for debugging
+        gc.collect()
 
     def update():
         if TileEditor.active_window:
@@ -418,6 +425,7 @@ class GUI:
     def reload():        
         # Re-initialize project-dependent UI components
         GUI.tile_palette = ui.TilePalette(items = TileCanvas.swatches, shape = (numpy.ceil(statics.SWATCH_LIMIT / 3).astype(int), 3), button_size = (32, 32), position = statics.R_SIDEBAR_TOPLEFT, dimensions = (statics.SIDEBAR_WIDTH, statics.DISPLAY_SIZE[1]), spacing = 30)
+        GUI.tile_palette.rows[0].elements[0].is_selected = True
 
     # Init & Update
     def initialize():        
@@ -429,6 +437,10 @@ class GUI:
         GUI.save_button = ui.Button(Vector2(0, 0), (statics.SIDEBAR_WIDTH / 2, 45), statics.SAVE_COLOR, assets.ICON_save, level_handler.ProjectData.save_project, None)
         GUI.load_button = ui.Button(Vector2(0, 0), (statics.SIDEBAR_WIDTH / 2, 45), statics.LOAD_COLOR, assets.ICON_load, (level_handler.ProjectData.load_project, GUI.reload), (None, None))
         GUI.save_buttons = ui.HorizontalLayoutGroup([GUI.save_button, GUI.load_button], Vector2(0, statics.DISPLAY_SIZE[1] - 45), statics.SIDEBAR_WIDTH, 0)
+
+        # Mark first tile & tool buttons as selected
+        GUI.tool_palette.rows[0].elements[0].is_selected = True
+        GUI.tile_palette.rows[0].elements[0].is_selected = True
 
     def update():
         # Update UI componentss

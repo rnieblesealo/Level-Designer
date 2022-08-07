@@ -76,6 +76,9 @@ class Toolbox(Tool):
         Pencil.icon = assets.ICON_pencil
         Eraser.icon = assets.ICON_eraser
         Marquee.icon = assets.ICON_marquee
+
+        # First tool selected by default
+        Toolbox.set_tool(Toolbox.toolbar[0])
     
     def make_selection():
         for y in range(statics.LEVEL_SIZE[1]):
