@@ -62,10 +62,13 @@ class Button(UIElement):
     functions = None
     arguments = None
     
+    select_on_click = False
+    is_selected = False
+
     __color: tuple
     __is_pressed = False
 
-    def __init__(self, position: Vector2, dimensions: tuple, color: tuple, icon: Surface, functions, arguments) -> None:
+    def __init__(self, position: Vector2, dimensions: tuple, color: tuple, icon: Surface, functions, arguments, select_on_click = False) -> None:
         super().__init__(position if position != None else Vector2(0, 0), dimensions)
         self.check_if_updates()
 
@@ -78,6 +81,8 @@ class Button(UIElement):
         else:
             self.functions = functions
             self.arguments = arguments
+
+        self.select_on_click = select_on_click
     
     def update(self):
         # Scan for clicks
@@ -90,11 +95,19 @@ class Button(UIElement):
                                 self.functions[i](self.arguments[i])
                             else:
                                 self.functions[i]() 
+                        if self.select_on_click:
+                            self.is_selected = True
                         self.__color = (int(self.color[0] * 0.25), int(self.color[1] * 0.25), int(self.color[2] * 0.25))
                         self.__is_pressed = True
             else:
                 self.__is_pressed = False
-                self.__color = (int(self.color[0] * 0.75), int(self.color[1] * 0.75), int(self.color[2] * 0.75))
+                self.__color = (int(self.color[0] * 0.5), int(self.color[1] * 0.5), int(self.color[2] * 0.5))
+                
+        # Check if button is selected if not being hovered or clicked to apply this color change
+        elif self.is_selected:
+            self.__color = (int(self.color[0] * 0.75), int(self.color[1] * 0.75), int(self.color[2] * 0.75))
+
+        # Default button color if not selected or clicked
         else:
             self.__color = self.color
 
@@ -222,6 +235,14 @@ class ButtonPalette(UIElement):
         # Place all into vertical layout group NOTE At topleft of screen by dafault
         self.group = ui.VerticalLayoutGroup(self.rows, self.position, self.dimensions[1], self.spacing)
 
+    def clear_selected_button(self):
+        # Clear selection from first selected button, this should be used when one button is meant to show that it is currently selected but we wish to clear it once we switch to another button.
+        for i in self.rows:
+            for j in i.elements:
+                if j.is_selected:
+                    j.is_selected = False
+                    return
+
     def update(self):
         # Update all buttons
         self.group.update()
@@ -231,7 +252,7 @@ class TilePalette(ButtonPalette):
         super().make_palette(items, shape, button_size)
         
         for i in range(len(items)):
-            button_i = ui.Button(Vector2(0, 0), button_size, statics.FOREGROUND_COLOR, pygame.transform.scale(items[i].get_texture(), (16, 16)), TileCanvas.set_swatch, items[i])
+            button_i = ui.Button(Vector2(0, 0), button_size, statics.FOREGROUND_COLOR, pygame.transform.scale(items[i].get_texture(), (16, 16)), (TileCanvas.set_swatch, self.clear_selected_button), (items[i], None), select_on_click=True)
             utils.place_at_first_empty(button_i, self.palette, None) # Add button of each element to palette
 
 class ToolPalette(ButtonPalette):
@@ -239,7 +260,7 @@ class ToolPalette(ButtonPalette):
         super().make_palette(items, shape, button_size)
 
         for i in range(len(items)):
-            button_i = ui.Button(Vector2(0, 0), button_size, statics.FOREGROUND_COLOR, items[i].icon, Toolbox.set_tool, items[i])
+            button_i = ui.Button(Vector2(0, 0), button_size, statics.FOREGROUND_COLOR, items[i].icon, (Toolbox.set_tool, self.clear_selected_button), (items[i], None), select_on_click=True)
             utils.place_at_first_empty(button_i, self.palette, None) # Add button of each element to palette
 
 class TileEditor:
@@ -249,7 +270,7 @@ class TileEditor:
     BACKGROUND_COLOR = '#242a38'
     MINUS_COLOR = '#ed553b'
     PLUS_COLOR = '#3caea3'
-    FONT = ('Helvetica', 10, 'bold')
+    FONT = ('pixelmix', 10)
     
     active_window = None
     rows = None
@@ -263,10 +284,13 @@ class TileEditor:
         # Create a new active window
         TileEditor.active_window = Tk()
         TileEditor.active_window.title('Tile Editor')
+        TileEditor.active_window.iconbitmap(assets.get_program_asset('logo.ico'))
         TileEditor.active_window.configure(bg=TileEditor.FOREGROUND_COLOR)
         TileEditor.active_window.protocol('WM_DELETE_WINDOW', TileEditor.on_close)
+
+        # Make column where entry box is located (4th) be weighted higher than all others, thus being allowed to resize
+        Grid.columnconfigure(TileEditor.active_window, 4, weight=1)
         
-        # Initialize window-dependent variables
         TileEditor.delete_image = PIL.ImageTk.PhotoImage(PIL.Image.open(assets.get_program_asset('minus.png')).resize((16, 16), PIL.Image.NEAREST))
         TileEditor.add_image = PIL.ImageTk.PhotoImage(PIL.Image.open(assets.get_program_asset('plus.png')).resize((16, 16), PIL.Image.NEAREST))
 
@@ -341,7 +365,7 @@ class TileInfoWidget:
         self.delete_button = tkinter.Button(window, image=TileEditor.delete_image, background=TileEditor.MINUS_COLOR, command=lambda:TileEditor.delete_tile(row))
         self.icon_button = tkinter.Button(window, image=self.texture_image, background=TileEditor.FOREGROUND_COLOR, command=self.prompt_icon_replacement)
         self.id_label = tkinter.Label(window, text='ID: {ID}'.format(ID=info.id), background=TileEditor.BACKGROUND_COLOR, foreground='white', font=TileEditor.FONT)
-        self.tag_label = Label(window, text='Tags:', background=TileEditor.FOREGROUND_COLOR, foreground='white', font=TileEditor.FONT)
+        self.tag_label = Label(window, text='Properties:', background=TileEditor.FOREGROUND_COLOR, foreground='white', font=TileEditor.FONT)
         self.tag_entry = Entry(window)
         
         self.icon_button.image = self.texture_image # ! Tkinter reference handling sucks, so we must assign this to prevent the image from getting destroyed.
@@ -350,7 +374,7 @@ class TileInfoWidget:
         self.icon_button.grid(row=self.row, column=1, sticky=W, padx=TileEditor.PADDING, pady=TileEditor.PADDING)
         self.id_label.grid(row=self.row, column=2, sticky=W, padx=TileEditor.PADDING, pady=TileEditor.PADDING)
         self.tag_label.grid(row=self.row, column=3, sticky=W, padx=TileEditor.PADDING, pady=TileEditor.PADDING)
-        self.tag_entry.grid(row=self.row, column=4, sticky=W, padx=TileEditor.PADDING, pady=TileEditor.PADDING)
+        self.tag_entry.grid(row=self.row, column=4, sticky=NSEW, padx=TileEditor.PADDING, pady=TileEditor.PADDING)
 
     def delete(self):        
         # Destroy all widgets

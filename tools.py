@@ -99,6 +99,5 @@ class Toolbox(Tool):
 
     def set_tool(new_tool):        
         Toolbox.clear_selection() # Clear previous selection when we switch tools!
-            
         statics.is_using = False # Clear previous tool state
-        Toolbox.current = new_tool
+        Toolbox.current = new_tool # Set new tool
