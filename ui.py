@@ -266,8 +266,11 @@ class ToolPalette(ButtonPalette):
             button_i = ui.Button(Vector2(0, 0), button_size, statics.FOREGROUND_COLOR, items[i].icon, (Toolbox.set_tool, self.clear_selected_button), (items[i], None), select_on_click=True)
             utils.place_at_first_empty(button_i, self.palette, None) # Add button of each element to palette
 
+class EditorWindow:
+    pass # TODO Merge TileEditor and ResizeWindow to be children of this class
+
 class TileEditor:
-    # TODO Use hex to rgb converter to process this!
+    # TODO Use hex to rgb converter to process this! 
     PADDING = 5
     FOREGROUND_COLOR = '#4e596f'
     BACKGROUND_COLOR = '#242a38'
@@ -412,6 +415,69 @@ class TileInfoWidget:
             # Reload UI for displayed palette to properly show
             GUI.reload()
 
+class ResizeWindow:
+    PADDING = 5
+    FOREGROUND_COLOR = '#4e596f'
+    BACKGROUND_COLOR = '#242a38'
+    MINUS_COLOR = '#ed553b'
+    PLUS_COLOR = '#3caea3'
+    FONT = ('pixelmix', 10)
+    
+    active_window = None
+
+    width_label: Label
+    width_entry: Entry
+
+    height_label: Label
+    height_entry: Entry
+
+    apply_button: tkinter.Button
+
+    def open():
+        # Create a new active window
+        ResizeWindow.active_window = Tk()
+        ResizeWindow.active_window.title('Resize Level')
+        ResizeWindow.active_window.iconbitmap(assets.get_program_asset('logo.ico'))
+        ResizeWindow.active_window.configure(bg=ResizeWindow.FOREGROUND_COLOR)
+        ResizeWindow.active_window.protocol('WM_DELETE_WINDOW', ResizeWindow.on_close)
+        ResizeWindow.active_window.geometry('300x100')
+
+        # Make column where entry boxes are located (2nd) be weighted higher than all others, thus being allowed to resize
+        Grid.columnconfigure(ResizeWindow.active_window, 1, weight=1)
+
+        # Create widgets
+        ResizeWindow.width_label = tkinter.Label(ResizeWindow.active_window, text='Width:', background=ResizeWindow.BACKGROUND_COLOR, foreground='white', font=ResizeWindow.FONT)
+        ResizeWindow.width_entry = tkinter.Entry(ResizeWindow.active_window)
+
+        ResizeWindow.height_label = tkinter.Label(ResizeWindow.active_window, text='Height:', background=ResizeWindow.BACKGROUND_COLOR, foreground='white', font=ResizeWindow.FONT)
+        ResizeWindow.height_entry = tkinter.Entry(ResizeWindow.active_window)
+
+        ResizeWindow.apply_button = tkinter.Button(ResizeWindow.active_window, font=ResizeWindow.FONT, fg='white', text='Apply', background=ResizeWindow.PLUS_COLOR, command=ResizeWindow.on_close)
+
+        # Grid widgets
+        ResizeWindow.width_label.grid(row=0, column=0, sticky=W, padx=TileEditor.PADDING, pady=TileEditor.PADDING)
+        ResizeWindow.width_entry.grid(row=0, column=1, sticky=EW, padx=TileEditor.PADDING, pady=TileEditor.PADDING)
+
+        ResizeWindow.height_label.grid(row=1, column=0, sticky=W, padx=TileEditor.PADDING, pady=TileEditor.PADDING)
+        ResizeWindow.height_entry.grid(row=1, column=1, sticky=EW, padx=TileEditor.PADDING, pady=TileEditor.PADDING)
+
+        ResizeWindow.apply_button.grid(row=2, column=0, sticky=W, padx=TileEditor.PADDING, pady=TileEditor.PADDING)
+
+    def on_close():
+        # Resize level only if at least one of new new widths is different
+        w_new = int(ResizeWindow.width_entry.get())
+        h_new = int(ResizeWindow.height_entry.get())
+        
+        if w_new != statics.LEVEL_SIZE[0] or h_new != statics.LEVEL_SIZE[1]:
+            TileCanvas.resize_level((w_new, h_new))
+
+        # Destroy window
+        ResizeWindow.active_window.destroy()
+
+    def update():
+        if ResizeWindow.active_window:
+            ResizeWindow.active_window.mainloop()
+
 class GUI:
     # Variabless
     tool_palette = None
@@ -435,7 +501,7 @@ class GUI:
         GUI.tile_palette = ui.TilePalette(items = TileCanvas.swatches, shape = (numpy.ceil(statics.SWATCH_LIMIT / 3).astype(int), 3), button_size = (32, 32), position = statics.R_SIDEBAR_TOPLEFT, dimensions = (statics.SIDEBAR_WIDTH, statics.DISPLAY_SIZE[1]), spacing = 30)
 
         GUI.edit_tile_button = ui.Button(Vector2(statics.R_SIDEBAR_TOPLEFT[0], statics.DISPLAY_SIZE[1] - 45), (statics.SIDEBAR_WIDTH, 45), statics.EDIT_COLOR, assets.ICON_edit, TileEditor.open, None)
-        GUI.resize_level_button = ui.Button(Vector2(statics.SIDEBAR_WIDTH + (statics.VIEWPORT_SIZE[0] / 2) - (45 / 2), statics.DISPLAY_SIZE[1] - 45), (45, 45), (200, 200, 200), None, TileCanvas.resize_level, (10, 10), False)
+        GUI.resize_level_button = ui.Button(Vector2(statics.SIDEBAR_WIDTH + (statics.VIEWPORT_SIZE[0] / 2) - (45 / 2), statics.DISPLAY_SIZE[1] - 45), (45, 45), (200, 200, 200), None, ResizeWindow.open, None, False)
         GUI.save_button = ui.Button(Vector2(0, 0), (statics.SIDEBAR_WIDTH / 2, 45), statics.SAVE_COLOR, assets.ICON_save, level_handler.ProjectData.save_project, None)
         GUI.load_button = ui.Button(Vector2(0, 0), (statics.SIDEBAR_WIDTH / 2, 45), statics.LOAD_COLOR, assets.ICON_load, (level_handler.ProjectData.load_project, GUI.reload), (None, None))
         GUI.save_buttons = ui.HorizontalLayoutGroup([GUI.save_button, GUI.load_button], Vector2(0, statics.DISPLAY_SIZE[1] - 45), statics.SIDEBAR_WIDTH, 0)
@@ -454,3 +520,4 @@ class GUI:
 
         # Handle external active_window
         TileEditor.update()
+        ResizeWindow.update()
