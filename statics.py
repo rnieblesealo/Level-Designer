@@ -15,9 +15,9 @@ CLOCK = None
 SIDEBAR_WIDTH = (DISPLAY_SIZE[0] - VIEWPORT_SIZE[0]) / 2
 R_SIDEBAR_TOPLEFT = pygame.math.Vector2(VIEWPORT_SIZE[0] + SIDEBAR_WIDTH, 0)
 
-TILE_SIZE = pygame.math.Vector2(16, 16)                                         # Size of a tile in pixels
-LEVEL_SIZE = (20, 10)                                                           # Canvas size where (x, y) represent amount of tiles for each axis
-LEVEL_SIZE_PX = (LEVEL_SIZE[0] * TILE_SIZE[0], LEVEL_SIZE[1] * TILE_SIZE[1])    # Pixel size of entire level
+TILE_SIZE = pygame.math.Vector2(16, 16)                                         # Size of a tile in pixels, this is a constant
+LEVEL_SIZE = (16, 8)                                                           # Canvas size where (x, y) represent amount of tiles for each axis, obtained from Level Data
+LEVEL_SIZE_PX = (LEVEL_SIZE[0] * TILE_SIZE[0], LEVEL_SIZE[1] * TILE_SIZE[1])    # Pixel size of entire level, obtained from Level Data
 
 SWATCH_LIMIT = 18                                                               # Limit to amount of tiles we can use to draw
 
@@ -47,6 +47,10 @@ last_pan_offset = pygame.math.Vector2(0, 0)
 is_panning = False
 is_using_tool = False
 
+def update_window_title():    
+    # Update window title to display project info
+    pygame.display.set_caption('{N} | {F} | {X} x {Y}'.format(N=APP_NAME, F=OPEN_PROJECT_PATH if OPEN_PROJECT_PATH else 'Unsaved Project', X=LEVEL_SIZE[0], Y=LEVEL_SIZE[1]))
+
 def initialize():
     global DISPLAY, VIEWPORT, CLOCK, offset
     
@@ -57,7 +61,7 @@ def initialize():
     VIEWPORT = pygame.Surface(VIEWPORT_SIZE)
     CLOCK = pygame.time.Clock()
     
-    pygame.display.set_caption(APP_NAME)
+    update_window_title()
     pygame.display.set_icon(utils.load_image(PROGRAM_ASSETS_PATH + 'logo.png'))
     
     # Default offset such that level draw area is centered

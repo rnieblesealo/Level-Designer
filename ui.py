@@ -418,6 +418,7 @@ class GUI:
     tile_palette = None
 
     edit_tile_button = None
+    resize_level_button = None
     save_button = None
     load_button = None
     save_buttons = None
@@ -434,6 +435,7 @@ class GUI:
         GUI.tile_palette = ui.TilePalette(items = TileCanvas.swatches, shape = (numpy.ceil(statics.SWATCH_LIMIT / 3).astype(int), 3), button_size = (32, 32), position = statics.R_SIDEBAR_TOPLEFT, dimensions = (statics.SIDEBAR_WIDTH, statics.DISPLAY_SIZE[1]), spacing = 30)
 
         GUI.edit_tile_button = ui.Button(Vector2(statics.R_SIDEBAR_TOPLEFT[0], statics.DISPLAY_SIZE[1] - 45), (statics.SIDEBAR_WIDTH, 45), statics.EDIT_COLOR, assets.ICON_edit, TileEditor.open, None)
+        GUI.resize_level_button = ui.Button(Vector2(statics.SIDEBAR_WIDTH + (statics.VIEWPORT_SIZE[0] / 2) - (45 / 2), statics.DISPLAY_SIZE[1] - 45), (45, 45), (200, 200, 200), None, TileCanvas.resize_level, (10, 10), False)
         GUI.save_button = ui.Button(Vector2(0, 0), (statics.SIDEBAR_WIDTH / 2, 45), statics.SAVE_COLOR, assets.ICON_save, level_handler.ProjectData.save_project, None)
         GUI.load_button = ui.Button(Vector2(0, 0), (statics.SIDEBAR_WIDTH / 2, 45), statics.LOAD_COLOR, assets.ICON_load, (level_handler.ProjectData.load_project, GUI.reload), (None, None))
         GUI.save_buttons = ui.HorizontalLayoutGroup([GUI.save_button, GUI.load_button], Vector2(0, statics.DISPLAY_SIZE[1] - 45), statics.SIDEBAR_WIDTH, 0)
@@ -448,6 +450,7 @@ class GUI:
         GUI.tile_palette.update()
         GUI.save_buttons.update()
         GUI.edit_tile_button.update()
+        GUI.resize_level_button.update()
 
         # Handle external active_window
         TileEditor.update()

@@ -65,6 +65,35 @@ class TileCanvas:
                     Vector2(x, y).elementwise() * statics.TILE_SIZE
                 )
 
+    def resize_level(new_size):
+        # ! The current solution to this is rather inefficient space-wise, but it's the most comprehensive one. Consider rewriting in the future.
+        
+        # Update values, storing old level size
+        old_level_size = statics.LEVEL_SIZE
+        
+        statics.LEVEL_SIZE = new_size
+        statics.LEVEL_SIZE_PX = (new_size[0] * statics.TILE_SIZE.x, new_size[1] * statics.TILE_SIZE.y)
+        
+        # Copy old level data
+        tiles_copy = statics.tiles.copy()
+
+        # Make level be a new array of desired size filled with blank swatches (numpy shifts around values on ndarray.resize, so this does not work)
+        TileCanvas.fill_level(TileCanvas.DEFAULT)
+
+        # Paste old level into new resized one
+        for x in range(old_level_size[0] if new_size[0] >= old_level_size[0] else new_size[0]):
+            for y in range(old_level_size[1] if new_size[1] >= old_level_size[1] else new_size[1]):
+                statics.tiles[y][x] = tiles_copy[y][x]
+
+        # Get rid of copy of tiles, this takes up a LOT of memory!
+        del tiles_copy
+
+        # Recenter level
+        statics.offset = pygame.math.Vector2(
+            (statics.VIEWPORT_SIZE[0] - statics.LEVEL_SIZE_PX[0] * statics.zoom) / 2,
+            (statics.VIEWPORT_SIZE[1] - statics.LEVEL_SIZE_PX[1] * statics.zoom) / 2
+        )
+
     def fill_deleted():
         # Substitute info of all deleted tiles for default tile
         for x in range(statics.LEVEL_SIZE[0]):
