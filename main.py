@@ -1,3 +1,4 @@
+from math import ceil
 import pygame
 import sys
 
@@ -23,9 +24,21 @@ while True:
         if event.type == pygame.QUIT:            
             sys.exit()
         
-        # TODO Figure out visual gridding bug (Zoom is disabled)
-        # // elif event.type == pygame.MOUSEWHEEL:
-        # //# data.zoom += event.y * 0.05 #zoom in according to mouse wheel
+        # event.y for mouse wheel is either -1 or 1 depending on scroll direction
+        # If zoom is 1 or greater, we add or subtract integers from it.
+        # If zoom is less than 1, we divide it/multiply it by 2 until it becomes 1; after this, we operate on it using integers again
+        # This prevents visual gridding as zoom values will always be multiples of 5
+        elif event.type == pygame.MOUSEWHEEL:
+            if event.y > 0:
+                if statics.zoom < 1:
+                    statics.zoom *= 2
+                else:
+                    statics.zoom += event.y
+            else:
+                if statics.zoom > 1:
+                    statics.zoom += event.y
+                else:
+                    statics.zoom /= 2
 
     if pygame.key.get_pressed()[pygame.K_ESCAPE]:
         sys.exit()

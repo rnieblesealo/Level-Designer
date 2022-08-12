@@ -464,12 +464,15 @@ class ResizeWindow:
         ResizeWindow.apply_button.grid(row=2, column=0, sticky=W, padx=TileEditor.PADDING, pady=TileEditor.PADDING)
 
     def on_close():
-        # Resize level only if at least one of new new widths is different
+        # Resize level only if at least one of new new widths is different TODO add failsafe for illegal input
         w_new = int(ResizeWindow.width_entry.get())
         h_new = int(ResizeWindow.height_entry.get())
         
         if w_new != statics.LEVEL_SIZE[0] or h_new != statics.LEVEL_SIZE[1]:
             TileCanvas.resize_level((w_new, h_new))
+
+        # Update main titlebar to show new dimensions
+        statics.update_window_title()
 
         # Destroy window
         ResizeWindow.active_window.destroy()
@@ -483,11 +486,16 @@ class GUI:
     tool_palette = None
     tile_palette = None
 
-    edit_tile_button = None
-    resize_level_button = None
+    font = None
+    
+    editor_button = None
+    resize_button = None
     save_button = None
     load_button = None
     save_buttons = None
+    
+    zoom_widget = None
+    zoom_widget_rect = None
 
     def reload():        
         # Re-initialize project-dependent UI components
@@ -500,8 +508,8 @@ class GUI:
         GUI.tool_palette = ui.ToolPalette(items = Toolbox.toolbar, shape = (2, 2), button_size = (45, 45), position = Vector2(0, 0), dimensions = (statics.SIDEBAR_WIDTH, statics.DISPLAY_SIZE[1]), spacing = 30)
         GUI.tile_palette = ui.TilePalette(items = TileCanvas.swatches, shape = (numpy.ceil(statics.SWATCH_LIMIT / 3).astype(int), 3), button_size = (32, 32), position = statics.R_SIDEBAR_TOPLEFT, dimensions = (statics.SIDEBAR_WIDTH, statics.DISPLAY_SIZE[1]), spacing = 30)
 
-        GUI.edit_tile_button = ui.Button(Vector2(statics.R_SIDEBAR_TOPLEFT[0], statics.DISPLAY_SIZE[1] - 45), (statics.SIDEBAR_WIDTH, 45), statics.EDIT_COLOR, assets.ICON_edit, TileEditor.open, None)
-        GUI.resize_level_button = ui.Button(Vector2(statics.SIDEBAR_WIDTH + (statics.VIEWPORT_SIZE[0] / 2) - (45 / 2), statics.DISPLAY_SIZE[1] - 45), (45, 45), (200, 200, 200), None, ResizeWindow.open, None, False)
+        GUI.editor_button = ui.Button(Vector2(statics.R_SIDEBAR_TOPLEFT[0], statics.DISPLAY_SIZE[1] - 45), (statics.SIDEBAR_WIDTH, 45), statics.EDIT_COLOR, assets.ICON_edit, TileEditor.open, None)
+        GUI.resize_button = ui.Button(Vector2(statics.SIDEBAR_WIDTH + (statics.VIEWPORT_SIZE[0] / 2) - (45 / 2), statics.DISPLAY_SIZE[1] - 45), (45, 45), (25, 25, 25), assets.ICON_resize, ResizeWindow.open, None, False)
         GUI.save_button = ui.Button(Vector2(0, 0), (statics.SIDEBAR_WIDTH / 2, 45), statics.SAVE_COLOR, assets.ICON_save, level_handler.ProjectData.save_project, None)
         GUI.load_button = ui.Button(Vector2(0, 0), (statics.SIDEBAR_WIDTH / 2, 45), statics.LOAD_COLOR, assets.ICON_load, (level_handler.ProjectData.load_project, GUI.reload), (None, None))
         GUI.save_buttons = ui.HorizontalLayoutGroup([GUI.save_button, GUI.load_button], Vector2(0, statics.DISPLAY_SIZE[1] - 45), statics.SIDEBAR_WIDTH, 0)
@@ -510,13 +518,20 @@ class GUI:
         GUI.tool_palette.rows[0].elements[0].is_selected = True
         GUI.tile_palette.rows[0].elements[0].is_selected = True
 
+        # Make font
+        GUI.font = pygame.font.Font(assets.get_program_asset('pixelmix.ttf'), 14)
+
     def update():
         # Update UI componentss
         GUI.tool_palette.update()
         GUI.tile_palette.update()
         GUI.save_buttons.update()
-        GUI.edit_tile_button.update()
-        GUI.resize_level_button.update()
+        GUI.editor_button.update()
+        GUI.resize_button.update()
+
+        # Update zoom widget
+        GUI.zoom_widget = GUI.font.render('{Z}x'.format(Z=statics.zoom), True, (255, 255, 255))
+        statics.VIEWPORT.blit(GUI.zoom_widget, (10, 10))
 
         # Handle external active_window
         TileEditor.update()

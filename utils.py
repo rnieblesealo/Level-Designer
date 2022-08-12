@@ -21,6 +21,13 @@ def scale_surface(surface = None, scale = 1) -> Surface:
 
     return transform.scale(surface, (surface.get_width() * scale, surface.get_height() * scale))
 
+def scale_surface_to(surface = None, scale = Vector2(1, 1)):
+    """
+    Scales a surface to match the dimensions specified.
+    """
+
+    return transform.scale(surface, (-(surface.get_width() - scale.x), -(surface.get_height() - scale.y)))
+
 def scale_rect(rect = Rect(0, 0, 0, 0), scale = 1) -> Rect:
     """
     Scales a rectangle by a numeric factor from its origin.

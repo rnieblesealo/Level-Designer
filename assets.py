@@ -9,9 +9,10 @@ ICON_load = None
 ICON_plus = None
 ICON_minus = None
 ICON_edit = None
+ICON_resize = None
 
 def initialize():
-    global ICON_pencil, ICON_eraser, ICON_marquee, ICON_save, ICON_load, ICON_plus, ICON_minus, ICON_edit
+    global ICON_pencil, ICON_eraser, ICON_marquee, ICON_save, ICON_load, ICON_plus, ICON_minus, ICON_edit, ICON_resize
     
     ICON_pencil = utils.load_image(get_program_asset('pencil.png'))
     ICON_eraser = utils.load_image(get_program_asset('eraser.png'))
@@ -21,6 +22,7 @@ def initialize():
     ICON_plus = utils.load_image(get_program_asset('plus.png'))
     ICON_minus = utils.load_image(get_program_asset('minus.png'))
     ICON_edit = utils.load_image(get_program_asset('edit.png'))
+    ICON_resize = utils.load_image(get_program_asset('resize.png'))
 
 def get_project_asset(file_name):
     return '{P}{N}'.format(P=statics.PROJECT_ASSETS_PATH, N=file_name)

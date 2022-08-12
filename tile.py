@@ -17,6 +17,9 @@ class TileCanvas:
     select_tile = pygame.Surface(statics.TILE_SIZE * statics.zoom, pygame.SRCALPHA)
     select_tile.fill(statics.SELECTED_COLOR)
 
+    active_highlight_tile = None
+    active_select_tile = None
+
     # Initialize swatches
     texture_cache = {}
     DEFAULT = None
@@ -42,8 +45,8 @@ class TileCanvas:
                 statics.tiles[y][x].update(statics.VIEWPORT)
 
         # Scale GUI tiles
-        pygame.transform.scale(TileCanvas.highlight_tile, statics.TILE_SIZE)
-        pygame.transform.scale(TileCanvas.select_tile, statics.TILE_SIZE)
+        TileCanvas.active_highlight_tile = pygame.transform.scale(TileCanvas.highlight_tile, statics.TILE_SIZE.elementwise() * statics.zoom)
+        TileCanvas.active_select_tile = pygame.transform.scale(TileCanvas.select_tile, statics.TILE_SIZE.elementwise() * statics.zoom)
 
     def fill_level(fill_tile):
         # Init and fill entire canvas with a specific tile
@@ -133,7 +136,7 @@ class TileCanvas:
         TileCanvas.swatch = new_swatch
 
     def highlight_hovered_tile():
-        statics.VIEWPORT.blit(TileCanvas.highlight_tile, (
+        statics.VIEWPORT.blit(TileCanvas.active_highlight_tile, (
                 utils.n_round(statics.level_mouse_pos.x, statics.TILE_SIZE.x) * statics.zoom + statics.offset.x,
                 utils.n_round(statics.level_mouse_pos.y, statics.TILE_SIZE.y) * statics.zoom + statics.offset.y
             )
@@ -282,4 +285,4 @@ class Tile:
 
         # If selected, highlight this tile
         if self.selected:
-            display.blit(TileCanvas.select_tile, self.__level_position)
+            display.blit(TileCanvas.active_select_tile, self.__level_position)
