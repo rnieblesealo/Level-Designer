@@ -314,6 +314,10 @@ class TileEditor:
         # Reload GUI to show changes to swatches
         GUI.reload()
 
+        # Delete all rows info
+        for row in TileEditor.rows:
+            row.delete()
+
         # Destroy window
         TileEditor.active_window.destroy()
 
@@ -363,8 +367,8 @@ class TileInfoWidget:
     delete_button: tkinter.Button
     icon_button: tkinter.Button
     id_label: Label
-    tag_label: Label
-    tag_entry: Entry
+    properties_label: Label
+    properties_entry: Entry
 
     def __init__(self, info, row, window = TileEditor.active_window) -> None:
         self.info = info
@@ -372,27 +376,38 @@ class TileInfoWidget:
 
         self.texture_image = PIL.ImageTk.PhotoImage(PIL.Image.open(info.texture_ref).resize((16, 16), PIL.Image.NEAREST))
         
+        # Make widgets
         self.delete_button = tkinter.Button(window, image=TileEditor.delete_image, background=TileEditor.MINUS_COLOR, command=lambda:TileEditor.delete_tile(row))
         self.icon_button = tkinter.Button(window, image=self.texture_image, background=TileEditor.FOREGROUND_COLOR, command=self.prompt_icon_replacement)
         self.id_label = tkinter.Label(window, text='ID: {ID}'.format(ID=info.id), background=TileEditor.BACKGROUND_COLOR, foreground='white', font=TileEditor.FONT)
-        self.tag_label = Label(window, text='Properties:', background=TileEditor.FOREGROUND_COLOR, foreground='white', font=TileEditor.FONT)
-        self.tag_entry = Entry(window)
+        self.properties_label = Label(window, text='Properties:', background=TileEditor.FOREGROUND_COLOR, foreground='white', font=TileEditor.FONT)
+        self.properties_entry = Entry(window)
         
+        # Store image reference
         self.icon_button.image = self.texture_image # ! Tkinter reference handling sucks, so we must assign this to prevent the image from getting destroyed.
 
+        # Place widgets on window
         self.delete_button.grid(row=self.row, column=0, sticky=W, padx=TileEditor.PADDING, pady=TileEditor.PADDING)
         self.icon_button.grid(row=self.row, column=1, sticky=W, padx=TileEditor.PADDING, pady=TileEditor.PADDING)
         self.id_label.grid(row=self.row, column=2, sticky=W, padx=TileEditor.PADDING, pady=TileEditor.PADDING)
-        self.tag_label.grid(row=self.row, column=3, sticky=W, padx=TileEditor.PADDING, pady=TileEditor.PADDING)
-        self.tag_entry.grid(row=self.row, column=4, sticky=NSEW, padx=TileEditor.PADDING, pady=TileEditor.PADDING)
+        self.properties_label.grid(row=self.row, column=3, sticky=W, padx=TileEditor.PADDING, pady=TileEditor.PADDING)
+        self.properties_entry.grid(row=self.row, column=4, sticky=NSEW, padx=TileEditor.PADDING, pady=TileEditor.PADDING)
+
+        # Display already existing TileInfo in entry box
+        self.properties_entry.insert(0, self.info.get_properties())
 
     def delete(self):        
+        print("Deleting")
+        
+        # Assign new properties to tiles
+        self.info.add_properties(self.properties_entry.get())
+        
         # Destroy all widgets
         self.delete_button.destroy()
         self.icon_button.destroy()
         self.id_label.destroy()
-        self.tag_label.destroy()
-        self.tag_entry.destroy()
+        self.properties_label.destroy()
+        self.properties_entry.destroy()
 
     def prompt_icon_replacement(self, window = TileEditor.active_window):
         # Get new texture

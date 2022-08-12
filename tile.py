@@ -172,7 +172,9 @@ class TileInfo:
 
     texture_ref = None              # COMPLETE path to texture, not just name!
     active_texture_ref = None       # Active texture reference; may differ from main texture ref in cases where main is missing
+    
     id = 0                          # Unique identifier for this tile
+    properties = None
 
     def __init__(self, texture = None, is_program_asset = False) -> None:
         self.id = TileCanvas.generate_id() # Generate a random ID for this new tile
@@ -185,6 +187,9 @@ class TileInfo:
             
         self.check_texture_ref()
         self.cache_texture()
+
+        # Initialize properties
+        self.properties = {}
 
     def __del__(self):
         # Log destruction of this TileInfo
@@ -226,7 +231,7 @@ class TileInfo:
         self.deleted = True # If the texture was uncached, the TileInfo has to have been deleted.
 
     # Update texture
-    def update_texture(self, new_texture_ref):
+    def update_texture(self, new_texture_ref): 
         # Update and check this texture
         self.texture_ref = new_texture_ref
         self.check_texture_ref()
@@ -235,6 +240,29 @@ class TileInfo:
     # Retrieve texture from cache
     def get_texture(self):
         return TileCanvas.texture_cache[self.id]
+
+    # Add properties from a comma-separated list to this TileInfo
+    def add_properties(self, new_properties):
+        # Adds a property/properties to this TileInfo
+        if len(new_properties) == 0:
+            return ''
+        data = new_properties.replace(' ', '').split(',') # Remove whitespace & separate by commas
+        for x in data:
+            info = x.split(',')
+            for i in info:
+                if '=' in i:
+                    pair = i.split('=')
+                    self.properties[pair[0]] = pair[1]
+                else:
+                    self.properties[i] = '1'        
+
+    # Retrieve properties as a comma-separated list from this TileInfo
+    def get_properties(self):
+        data = ''
+        for key, value in self.properties.items():
+            data += '{K}={V},'.format(K=key, V=value)
+        data = data[:-1] # Remove last char which will be a comma, not sure how splicing works here
+        return data
 
 class Tile:
     info = None
